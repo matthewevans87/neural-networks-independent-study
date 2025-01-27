@@ -1,0 +1,12 @@
+*
+
+!/.cspell/**
+!/.vscode/**
+!/readme.md
+!/.gitignore
+!/.vscode/
+!/.vscode/extensions.json
+
+!**/
+!**/*.pdf
+!**/*.tex

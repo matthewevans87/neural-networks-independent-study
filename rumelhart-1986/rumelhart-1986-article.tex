@@ -1,0 +1,165 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{titlesec}
+\geometry{a4paper, margin=1in}
+
+\titleformat{\section}{\normalsize\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\small\bfseries}{\thesubsection}{1em}{}
+
+\title{
+    Response to Rumelhart et al. (1986) \\
+    \large A Literature Review Based on the Heilmeier Catechism
+}
+\author{Matthew Evans}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{What are you trying to do?}
+% Articulate your objectives with absolutely no jargon
+
+In their paper, Rumelhart et al. (1986) introduce a technique to automatically learn and represent ``useful new features" to improve the accuracy of neural networks.
+
+
+
+\section*{How is it done today, and what are the limits of current practice?}
+\subsection*{The Perceptron Model}
+
+% Discuss the state of the art in neural networks at the time of Rumelhart et al. (1986) and the limitations of existing approaches that their work aimed to address.
+
+The paper mentions the perceptron model which has a single layer of inputs (often) directly connected to a single layer of outputs. Like other neural networks, the edges connecting inputs to outputs have weights which can be learned (in this case, by the ``perceptron-convergence procedure''), with each weight indicating the impact of a given input feature node on a given output node. Perceptron models can be enhanced with so-called ``feature analyzers'' in which domain-specific knowledge is used to manually adjust the impact of a feature on the networks output.
+
+\subsection*{Limitations of the Perceptron Model}
+
+The perceptron's weaknesses stem from its classification function $y = \text{sign}(W^TX+b)$ represents a hyperplane (i.e., a line). Its representational power is limited to tasks expressible as a linear combination of its inputs. Hence, if a dataset is not linearly separable, the perceptron will be unable to find a decision boundary in the data, and will fail to converge on a solution. Furthermore, the perceptron is particularly sensitive to noise and outliers (e.g., mislabeled data) polluting what would otherwise be a linearly separable dataset, preventing convergence and yielding poor generalization (high variance).
+
+
+\section*{What is new in your approach and why do you think it will be successful?}
+
+\subsection*{Learning the Weights of Hidden Units}
+Rumelhart et al. (1986) build on the multi-layer perceptron model, providing a solution for learning (rather than manually fixing) the weights on connections between internal (``hidden'') layers and the output layer. Specifically, their ``back-propagation'' approach identifies each hidden unit's contribution to the error in the output layer and facilitates adjusting the weights of hidden units, enabling convergence to a local local minimum in error function.
+
+The paper describes a two-step process whereby outputs at each layer are computed (i.e., the forward-pass), and then the weights of connection are then adjusted according to the adjacent unit's contribution to the overall output error.
+
+\subsection*{Forward Pass}
+The forward pass computes the output of each node $j$ in all hidden layers and the output layer.
+
+The input the node, $x_j$, is given by
+
+$$ x_j = \sum_{i}y_{i}w_{ji} $$
+
+where $y_i$ is output of unit $i$ into unit $j$, and $w_{ji}$ is the weight of the connection from unit $i$ to unit $j$.
+
+The output of the node, $y_j$, is given by
+
+$$ y_j = \frac{1}{1 + e^{-x_j}} $$
+
+This output function is, notably, continuously differentiable and non-linear.
+
+\subsection*{Backwards Pass}
+
+The backwards pass computes each unit's contribution to the overall error of the network.
+
+The output layer's error given as
+
+$$ E = \frac{1}{2}\sum_{c} \sum_{j} (y_{j, c} - d_{j, c})^2$$
+
+where $j$ are the units of the penultimate layer and $c$ are the training examples.
+
+We use the chain rule to compute $\frac{\partial E}{\partial w_{ji}}$, each weight's contribution to the error, as follows.
+For some fixed data point $c$, for each unit $j$, we have
+\begin{align}
+    \frac{\partial E}{\partial y_{j}} & = \frac{\partial}{\partial y_j} \left( \frac{1}{2} \sum_{j} (y_{j} - d_{j})^2 \right) \\
+                                      & = y_j - d_j
+\end{align}
+
+Using the chain rule, we compute $ \frac{\partial E}{\partial x_{j}} = \frac{\partial E}{\partial y_{j}} \frac{\partial y_j}{\partial x_{j}}$
+
+with $\frac{\partial y_j}{\partial x_{j}}$ given by
+
+\begin{align}
+    \frac{\partial y_j}{\partial x_{j}} & = \frac{\partial}{\partial x_{j}} \left( \frac{1}{1 + e^{-x_j}} \right) \\
+                                        & = -(1 + e^{-x_j})^{-2}(-e^{x_j})                                        \\
+                                        & = \frac{ e^{x_j}}{(1 + e^{-x_j})^{2}}                                   \\
+                                        & = y_j (1-y_j)
+\end{align}
+
+\begin{align}
+    \frac{\partial E}{\partial x_{j}} & = \frac{\partial E}{\partial y_{j}} \frac{\partial y_j}{\partial x_{j}} \\
+                                      & = (y_j - d_j) y_j(1-y_j)
+\end{align}
+
+Finally, we use the chain rule to compute $\frac{\partial E}{\partial w_{ji}} = \frac{\partial E}{\partial x_{j}} \frac{\partial x_j}{\partial w_{ji}}$
+
+with $\frac{\partial x_j}{\partial w_{ji}}$ given by
+
+\begin{align}
+    \frac{\partial x_j}{\partial w_{ji}} & = \frac{\partial}{\partial w_{ji}} \left( \sum_{i}y_{i}w_{ji} \right) \\
+                                         & = y_{i}
+\end{align}
+
+Finally
+
+\begin{align}
+    \frac{\partial E}{\partial w_{ji}} & = \frac{\partial E}{\partial x_{j}} \frac{\partial x_{j}}{\partial w_{ji}} \\
+                                       & = (y_j - d_j) y_j(1-y_j) y_{i}
+\end{align}
+
+We now use the following update rule to adjust adjust each weight
+
+$$ \Delta W = - \varepsilon \frac{\partial E}{\partial w} $$
+
+where $\varepsilon$ is the learning rate, used to scale the update of $w$ on each iterative step.
+
+\section*{Who cares and what difference will it make?}
+% Identify the stakeholders and communities that would benefit from the advancements proposed by Rumelhart et al. (1986).
+
+The ability to compute the gradient of the error with respect to the weights of each internal edge, combined with the nonlinear sigmoidal output function enables a multi-layer neural network to perform classification tasks on nonlinear datasets without manually filtering (i.e., manipulating) edge weights. This improvement over the perceptron model enables learning complex patterns and relationships in data, which is particularly beneficial for fields such as image and speech recognition, where data is inherently nonlinear and high-dimensional.
+
+The methods described in the paper have enabled advances in research and industry, particularly in the development of deep learning algorithms. These advancements have led to significant improvements in various applications, including image and speech recognition, natural language processing, and autonomous systems. By automating the learning of complex patterns in data, the techniques introduced by Rumelhart et al. (1986) have paved the way for more sophisticated and accurate models, driving innovation and progress in both academic research and practical implementations.
+
+\section*{Costs, Benefits, and Impact}
+% Analyze the potential risks and rewards associated with the approach proposed by Rumelhart et al. (1986).
+\subsection*{Costs}
+The technique described in the paper enables the construction of highly sophisticated models, yet with added sophistication comes the risk of over-fitting to training data. Additionally, the method described in this paper is inherently more complex to implement and requires additional compute to train.
+
+\subsection*{Benefits}
+The use of back-propagation and hidden layers enables a network to identify non-obvious ``regularities'' in data, enabling the creation of learning models which can correctly solve highly complex tasks in non-linearly separable, high-dimensional spaces.
+
+\subsection*{Impact}
+
+With the hindsight perspective of several decades since the paper's publication, we can see the enormous beneficial impact this technique has had in the research and development of neural networks, which have since been used to remarkable effect in a plethora of problem domains such as:
+
+\begin{itemize}
+    \item \textbf{Image Recognition:} Convolutional neural networks (CNNs) have revolutionized the field of computer vision, enabling significant advancements in image classification, object detection, and image segmentation.
+    \item \textbf{Speech Recognition:} Recurrent neural networks (RNNs) and long short-term memory networks (LSTMs) have greatly improved the accuracy and efficiency of speech recognition systems, leading to widespread adoption in virtual assistants and transcription services.
+    \item \textbf{Natural Language Processing:} Techniques such as word embeddings and transformers have transformed natural language processing tasks, including machine translation, sentiment analysis, and text generation.
+    \item \textbf{Autonomous Systems:} Neural networks have been instrumental in the development of autonomous vehicles, enabling real-time decision-making and navigation in complex environments.
+    \item \textbf{Healthcare:} Deep learning models have been applied to medical imaging, drug discovery, and personalized medicine, leading to improved diagnostic accuracy and treatment outcomes.
+\end{itemize}
+
+These advancements highlight the profound impact of the back-propagation algorithm introduced by Rumelhart et al. (1986), which has become a cornerstone of modern deep learning techniques.
+
+
+% \section*{How much will it cost?}
+% Provide an estimation of the resources required to implement the approach proposed by Rumelhart et al. (1986), including time, money, and effort.
+
+% \section*{How long will it take?}
+% Estimate the timeline for the successful implementation and adoption of the approach proposed by Rumelhart et al. (1986).
+
+% \section*{What are the midterm and final ``exams'' to check for success?}
+% Define the criteria and metrics that can be used to evaluate the success of the approach proposed by Rumelhart et al. (1986) in the short term and long term.
+
+% \section*{Conclusion}
+% Summarize the key points discussed in the response and provide a final evaluation of the work by Rumelhart et al. (1986) based on the Heilmeier Catechism.
+
+
+% \bibliographystyle{plain}
+% \bibliography{references}
+
+\end{document}
