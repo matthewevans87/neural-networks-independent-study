@@ -27,16 +27,16 @@ In their paper, Rumelhart et al. (1986) introduce a technique to automatically l
 
 
 
-\section*{How is it done today, and what are the limits of current practice?}
+\section*{How was it previously done, and what were the limits of previous practice?}
 \subsection*{The Perceptron Model}
 
 % Discuss the state of the art in neural networks at the time of Rumelhart et al. (1986) and the limitations of existing approaches that their work aimed to address.
 
-The paper mentions the perceptron model which has a single layer of inputs (often) directly connected to a single layer of outputs. Like other neural networks, the edges connecting inputs to outputs have weights which can be learned (in this case, by the ``perceptron-convergence procedure''), with each weight indicating the impact of a given input feature node on a given output node. Perceptron models can be enhanced with so-called ``feature analyzers'' in which domain-specific knowledge is used to manually adjust the impact of a feature on the networks output.
+The paper mentions the perceptron model which has a single layer of inputs directly connected to a single layer of outputs. Like other neural networks, the edges connecting inputs to outputs have weights which can be learned (in this case, by the ``perceptron-convergence procedure''), with each weight indicating the impact of a given input feature node on a given output node. Perceptron models can be enhanced with so-called ``feature analyzers'' in which domain-specific knowledge is used to manually adjust the impact of a feature on the networks output.
 
 \subsection*{Limitations of the Perceptron Model}
 
-The perceptron's weaknesses stem from its classification function $y = \text{sign}(W^TX+b)$ represents a hyperplane (i.e., a line). Its representational power is limited to tasks expressible as a linear combination of its inputs. Hence, if a dataset is not linearly separable, the perceptron will be unable to find a decision boundary in the data, and will fail to converge on a solution. Furthermore, the perceptron is particularly sensitive to noise and outliers (e.g., mislabeled data) polluting what would otherwise be a linearly separable dataset, preventing convergence and yielding poor generalization (high variance).
+The perceptron's weaknesses stem from its classification function $y = \text{sign}(W^TX+b)$ represents a hyperplane (i.e., a line). Its representational power is limited to tasks expressible as a linear combination of its inputs. Hence, if a dataset is not linearly separable, the perceptron will be unable to find a decision boundary in the data, and will fail to converge on a solution with the classic example being the XOR function. Furthermore, the perceptron is particularly sensitive to noise and outliers (e.g., mislabeled data) polluting what would otherwise be a linearly separable dataset, preventing convergence and yielding high variance and poor generalization.
 
 
 \section*{What is new in your approach and why do you think it will be successful?}
@@ -44,7 +44,7 @@ The perceptron's weaknesses stem from its classification function $y = \text{sig
 \subsection*{Learning the Weights of Hidden Units}
 Rumelhart et al. (1986) build on the multi-layer perceptron model, providing a solution for learning (rather than manually fixing) the weights on connections between internal (``hidden'') layers and the output layer. Specifically, their ``back-propagation'' approach identifies each hidden unit's contribution to the error in the output layer and facilitates adjusting the weights of hidden units, enabling convergence to a local local minimum in error function.
 
-The paper describes a two-step process whereby outputs at each layer are computed (i.e., the forward-pass), and then the weights of connection are then adjusted according to the adjacent unit's contribution to the overall output error.
+The paper describes a two-step process whereby outputs at each layer are computed (i.e., the forward-pass), and then the weights of connections from units are adjusted according to that unit's contribution to the overall output error.
 
 \subsection*{Forward Pass}
 The forward pass computes the output of each node $j$ in all hidden layers and the output layer.
@@ -110,7 +110,7 @@ Finally
                                        & = (y_j - d_j) y_j(1-y_j) y_{i}
 \end{align}
 
-We now use the following update rule to adjust adjust each weight
+We now use the following update rule to iteratively adjust each weight
 
 $$ \Delta W = - \varepsilon \frac{\partial E}{\partial w} $$
 
