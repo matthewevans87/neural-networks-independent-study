@@ -1,0 +1,100 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{titlesec}
+\geometry{a4paper, margin=1in}
+
+% \titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+% \titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+\title{
+    Response to LeCun et al., (1998) \\
+    % \large A Literature Review Based on the Heilmeier Catechism
+}
+\author{Matthew Evans}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Approach}
+% What are you trying to do? Articulate your objectives using absolutely no jargon. 
+In \textit{Gradient-Based Learning Applied to Document Recognition}\cite{lecun1998gradient}, LeCun et al. present a novel system for efficiently and accurately recognizing handwritten and machine-printed characters on documents (e.g., bank checks). Their method aims to produce a flexible, trainable recognition system that minimizes the need for handcrafted rules. Furthermore, their system, despite consisting of multiple sub-tasks (i.e., ``modules'') can be trained end-to-end.
+
+
+\subsection*{Predecessors}
+% How is it done today, and what are the limits of current practice?
+
+
+Prior to this work, the state-of-the-art approach consisted of combining a hand-tuned ``feature extractor'' with a trainable low-dimensional classifier.
+
+Under this scheme, a human domain expert designs rules, implemented in the feature extractor module, to detect and quantify features (e.g., pen stroke thickness, curves, etc.). These rules transform the raw input (e.g., an image) into a low-dimensional feature vector which is then fed as input to a general purpose learning algorithm (e.g., decision tree).
+
+The handcrafted heuristics of the feature extractor are responsible for segmenting the input image into individual characters, which are then classified by the low-dimensional classifier. This strategy is highly task-specific and doesn't generalize well to varied handwriting styles resulting in poor performance.
+
+
+\subsection*{Novelty}
+% What is new in your approach and why do you think it will be successful? 
+The authors incorporate their prior work on Convolutional Neural Networks\cite{10.1162/neco.1989.1.4.541} and introduce Graph Transformer Networks as a new technique for document recognition.
+
+\subsubsection*{Feature Extraction}
+As mentioned, prior methods utilized a feature extractor module based on handcrafted heuristics to transform raw image inputs into features. The authors' approach enables learning features directly from the raw image pixels, enabling the system to learn a wide variety of inputs, greatly improving generalization.
+
+\subsubsection*{Convolutional Neural Networks (CNNs)}
+Rather than relying on heuristic-based feature extraction, the authors employ CNNs to automatically learn meaningful features from images. CNNs utilize \textit{local receptive fields}, which focus on small regions of the image instead of processing it all at once. This approach enables the network to naturally detect small-scale patterns that traditionally required human-designed feature extractors to identify.
+
+CNNs leverage weight sharing to dramatically reduce the number of learned parameters and improve computational efficiency. Unlike fully-connected neural networks that connect each neuron to every input pixel, CNNs employ \textit{convolutional filters} - small sets of weights that scan across the entire image. These filters act as sliding windows, detecting features that may appear \textit{anywhere} in the image. By reusing the same learned features throughout the image, the network achieves greater flexibility and generalization capability.
+
+
+CNNs employ a technique called \textit{pooling} to reduce sensitivity to distortions. Through subsampling, pooling reduces the spatial resolution of feature maps by selecting the maximum value within small regions. This mechanism makes the network more robust to the small shifts, rotations, and distortions that naturally occur in handwritten text.
+
+In contrast to previous systems that flattened images into single vectors of pixels, thereby discarding crucial spatial relationships, CNNs preserve and leverage spatial context through their hierarchical structure. Early layers detect simple features like edges, strokes, and loops, while deeper layers combine these primitives to recognize complete characters. This architecture naturally captures the relationships between image features (such as distinguishing between the double circles of an `8' and the single circle of a `0'), leading to more robust character recognition.
+
+\subsubsection*{Global Training}
+Traditional document recognition systems consisted of independently built or trained submodules (feature extraction, segmentation, classification, etc.). The authors revolutionized this approach by creating a globally trainable system where each module incorporates a differentiable error function. This innovation enables error backpropagation through the entire pipeline, from the final module to the first. By training all modules simultaneously, the system avoids scenarios where submodules perform well in isolation but fail when integrated into the complete document recognition system.
+
+\subsubsection*{Graph Transformer Networks (GTNs)}
+The paper's main contribution is the introduction of the \textit{Graph Transformer Network} and its usefulness for recognizing complete words and sentences. While prior document recognition systems struggled to segment and interpret individual characters within their broader context, GTNs provide an elegant solution through a globally trainable graph-based architecture. This approach enables seamless learning across all modules in the document recognition pipeline.
+
+Traditional document recognition systems operate as a pipeline of specialized modules, where each module's output feeds into the next. A significant limitation of this approach is that when upstream modules (such as segmentation) make errors, downstream modules (like classification) have no mechanism for recovery. GTNs elegantly solve this problem by enabling error signals to propagate backward through the entire pipeline. This end-to-end optimization allows modules that typically operate in isolation (such as character segmentation) to learn from broader contextual information (like words, sentences, and documents), substantially improving the system's overall performance and generalization capabilities.
+
+GTNs represent input data as directed acyclic graphs (DAGs), where nodes represent potential interpretations of input elements (such as letters or numbers), and edges represent valid transitions between these elements. At the heart of GTNs is a learned scoring function, optimized through gradient descent, that determines the most probable interpretation of each element. Consider the character segmentation module in the authors' document recognition system: it first applies heuristics to generate potential cuts in the input image, with each cut represented as a node in the graph. Not all cuts are valid - for example, a cut should not separate the horizontal line from the 'L' shape in the number '4'. The graph then connects each valid cut to all subsequent possible cuts via edges, creating multiple potential paths through the DAG. Through training, the scoring function learns to assign higher scores to paths that correspond to correct character segmentations, effectively learning which combinations of cuts produce valid characters.
+
+
+\section*{Considerations}
+
+\subsection*{Costs}
+\begin{itemize}
+    \item While the use of CNNs provides a dramatic improvement in computational efficiency over fully connected neural networks, the number of parameters in a CNN can still be large, making them potentially time-consuming to train.
+
+    \item As noted by the authors, ability of neural network based systems relies heavily on the availability of large labeled training datasets. These datasets can be expensive and labor-intensive to acquire or construct.
+
+    \item Neural networks, especially those with deep architectures, can act as black boxes, making them difficult to debug or improve.
+
+    \item The document recognition system presented, while achieving greater generalization than prior methods, is still only suitable for recognition in the domain on which it was trained (e.g., bank checks). The system would need to be retrained and re-tuned if it were to be used in other domains.
+\end{itemize}
+
+% What are the risks? 
+% How much will it cost?
+% How long will it take?
+% What are the mid-term and final “exams” to check for success? 
+
+\subsection*{Benefits}
+
+\begin{itemize}
+    \item As previously mentioned, the authors' approach eliminates the need for handcrafted feature engineering, and instead learns features from training data, thereby reducing human effort and removing human bias.
+
+    \item The use of CNNs enables the system to understand spatial hierarchies, make it more effective at recognizing complex patters such as those present in handwritten text. The use of GTNs enables the entire system to be globally trained from raw input data, improving generalization.
+\end{itemize}
+
+\section*{Impact}
+% Who cares? If you are successful, what difference will it make? 
+The techniques described in this paper have had an enormous impact across machine learning. The paper introduced the MNIST dataset, which became a gold standard for evaluating image classification models and remains widely used in research, academia, and AI competitions. The authors' work demonstrated real-world success through their GTN-based document recognition system, which processes millions of bank checks daily. Furthermore, the CNN architectures they detailed laid crucial groundwork for modern deep learning models in computer vision. Their strategies, particularly hierarchical feature detection, have influenced advances beyond computer vision, inspiring developments in natural language processing and medical imaging.
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
