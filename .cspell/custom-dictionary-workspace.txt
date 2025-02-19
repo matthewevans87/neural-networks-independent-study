@@ -1,4 +1,6 @@
 # Custom Dictionary Words
+backpropagation
 Convolutional
 Heilmeier
+inproceedings
 Rumelhart

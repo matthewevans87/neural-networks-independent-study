@@ -1,0 +1,168 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{positioning,matrix}
+\geometry{a4paper, margin=1in}
+
+\title{
+    Response to LeCun et al., (1989) \\
+}
+\author{Matthew Evans}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Approach}
+% What are you trying to do? Articulate your objectives using absolutely no jargon. 
+In \textit{Backpropagation Applied to Handwritten Zip Code Recognition} \cite{lecun1998gradient}, LeCun et al. propose a novel machine learning architecture for recognizing digitized hand written numbers, specifically USPS Zip codes. Their design intentionally constrains the system, forcing it to recognize patterns that are likely to occur in multiple parts of a digit (e.g., lines and curves). This strategic constraint enables building a system that requires no manually tuning and which can be actualized (i.e., trained) faster than previous, more complex systems.
+
+\subsection*{Predecessors}
+% How is it done today, and what are the limits of current practice?
+
+Prior systems (described in \cite{Denker1989}) for digit recognition relied heavily on hand-designed features and manually tuned constants in their first few layers, requiring significant human effort in preprocessing and feature extraction before the neural network could process the data. Though these systems leverage convolution, not all of their parameters were systematically learned.
+
+% ``[The neural network connections, trained using back propagation, ] is in contrast with earlier work (Denker et al. 1989) where the first few layers of connections were hand chosen constants implemented on a neural-network chips. ''
+
+% ``The first several stages of processing in our previous system (described in Denker et al 1989) involved convolutions in which the coefficients had been laboriously hand designed''
+
+% ``Our results appear to be at the state of the art in digit recognition. Our network was trained on a low-level representation of data that had minimal preprocessing (as opposed to elaborate feature extraction).''
+
+
+\subsection*{Novelty}
+% What is new in your approach and why do you think it will be successful? 
+
+``Unlike previous results reported by our group on this problem (Denker et all 1998), the learning network is directly fed with images, rather than feature vectors, thus demonstrating the ability of backpropagation networks to deal with large amounts of low-level information.''
+
+\subsubsection*{Input and Output}
+Unlike prior systems, which required extensive manual preprocessing and feature selection, the authors' system requires minimal preprocessing: locating the zip code on the envelope, separating digits, removing noise, and transforming the image to a standardized 16x16 pixel format. From this point, the entire recognition process is handled by a constrained multilayer network with adaptive connections trained through backpropagation, eliminating the need for hand-chosen constants in the early layers.
+
+% The authors' system first applies preprocessing steps:
+% - zip code is located on envelope
+% - digits are separated from each other
+% - removal of extraneous marks in the image
+% - linear transformation is applied to make the image fit in a 16x16 gray scale pixel image
+
+% ``The remainder of the recognition is entirely performed by a multilayer network. All connections in the network are adaptive, although heavily constrained, and are trained using backpropagation. This is in contrast with earlier work (Denker et al. 1989) where the first few layers of connections were hand-chosen constants implemented on a neural-network chip.''
+
+\subsubsection*{Feature Maps and Weight Sharing}
+The authors introduce two key architectural constraints: feature maps and weight sharing.
+
+\textbf{Feature maps} identify and define specific features (e.g., lines, curves, etc.) occurring throughout the input image. They achieve this by convolving \textbf{receptive fields} across the input image; this can be thought of as moving a ``sliding window'' across the rows of pixels in the input image. As the window moves, it identifies similar patterns occurring in different locations throughout the input image. For a given feature map (of which there are many), all of the receptive fields (i.e., each position of the sliding window) are \textit{forced} to learn the same shared set of weights. Consequently, the feature map learns a \textit{single} feature, indifferent to that feature's location within the input image.
+
+These constraints serve multiple purposes:
+\begin{itemize}
+    \item The network is robust to feature location (i.e., shift-invariance)
+    \item The number of free parameters is dramatically reduced, requiring less training time and data
+    \item Geometric and topological information such as the relevance of neighboring pixels is captured
+    \item They maintain the ability to detect local features while allowing their combination into higher-order features
+\end{itemize}
+
+
+% ``Classical work in visual pattern recognition as demonstrated the advantage of extracting local features and combining them to form higher order features. Such knowledge can be easily built into the network by forcing the hidden units to combine only local sources of information. Distinctive features of an object can appear at various locations on the input image. Therefore it seems judicious to have a set of feature detectors that can detect a particular instance of a feature anywhere on the input plate. Since the precise location of a feature is not relevant to the classification, we can afford to lose some position information in the process.''
+
+% ``The detection of a particular feature at any location on the input can be easily done using the ``weight sharing'' technique. [Weight sharing] consists in having several connections (links) controlled by a single parameter (weight).''
+
+% ``Weight sharing not only greatly reduces the number of free parameters in the network but also can express the information about the geometry and topology of the task. In our case, the first hidden layer is composed of several planes that we call \textit{feature maps}. All units in a plane share the same set of weights, thereby detecting the same feature at different locations. Since the exact position of the feature is not important, the feature map need not have as many units as the input.''
+
+
+% ``In the present system, the first two layers of the network are constrained to be convolutional, but the system automatically learns the coefficients that make up the kernels. This ``constrained backpropagation'' is the key to success of the present system: it not o nly builds in shift-invariance, but vastly reduces the number of free parameters, thereby proportionally reducing the amount of training data required to achieve a given level of generalization performance (Denker et al. 1987; Baum and Haussler 1989). This is remarkable considering that much less specific information about the problem was built into the network.''
+
+% ``The network had many connections but relatively few free parameters. The network architecture and constraints on the weights were designed to incorporate geometric knowledge about the task into the system. Because of the redundant nature of the data and because of the constraints imposed on the network, the learning time was relatively short considering the size of the training set.''
+
+% ``One important feature of this data base is that both the training set and the testing set contain numerous examples that ambiguous, unclassifiable, or even misclassified.''
+
+\subsubsection*{Network Architecture}
+``The network has three hidden layers named H1, H2, and H3 respectively. Connections entering H1 and H2 are local and heavily constrained.''
+
+
+The network architecture is as follows.
+
+\begin{itemize}
+    \item The \textbf{Input layer} contains the preprocessed image with \(16 \times 16 = 256\) total input units.
+
+    \item \textbf{Hidden layer \(H_{1}\)} consisting of feature maps \(H_{1, 1}, \dots H_{1, 12}\) each with \(8 \times 8 = 64\) hidden units, each of which receives input from a receptive field over \(5 \times 5 = 25\) input units. All 64 receptive fields of a given feature map, though receiving input from a \textit{different} set of 25 \textit{input units}, are constrained to share the \textit{same} 25 \textit{weights}. Thus \(H_1\) has the following.
+
+          \begin{itemize}
+              \item \(\underset{maps}{12} \times (\underset{units}{8 \times 8}) = 768\) units
+              \item \(\underset{units}{768} \times (\underset{r. field}{5 \times 5} + \underset{bias}{1}) = 19,968\) connections
+              \item \(\underset{maps}{12} \times (\underset{r. field}{5 \times 5}) + \underset{biases}{768} = 1,068\) free parameters
+          \end{itemize}
+
+    \item \textbf{Hidden Layer \(H_{2}\)} similarly consists of 12 feature maps, in this case, with \(4 \times 4 = 16\) hidden units each. Each of these units combines information from 8 of the 12 feature maps in \(H_1\). Each receptive field is composed of eight \(5\times 5\) neighborhoods centered around units in identical positions within each of the eight selected \(H_1\) feature maps. As before, all units in a given feature map are constrained to have identical weight vectors.''\cite{lecun1998gradient}. Thus \(H_2\) has the following.
+
+          \begin{itemize}
+              \item \(\underset{maps}{12} \times (\underset{units}{4 \times 4}) = 192\) units
+              \item \(\underset{units}{192} \times (\underset{r. field}{5 \times 5} \times \underset{maps}{8}) + \underset{biases}{192} = 38,592\) connections
+              \item \(\underset{maps}{12} \times (\underset{r. field}{5 \times 5} \times \underset{maps}{8}) + \underset{biases}{192} = 1,068\) free parameters
+          \end{itemize}
+
+    \item \textbf{Hidden Layer \(H_3\)} has 30 units and is fully connected to \(H_2\). Thus \(H_3\) has the following.
+
+          \begin{itemize}
+              \item \(\underset{units}{30}\) units
+              \item \(\underset{units}{30} \times \underset{H_{2}~units}{192} = 5,760\) connections
+              \item \(\underset{units}{30} \times \underset{H_{2}~units}{192} + \underset{biases}{30} = 5,790\) free parameters
+          \end{itemize}
+
+    \item The \textbf{Output layer} has 10 units and is fully connected to \(H_3\), adding another \(30 \times 10 = 300\) units.
+\end{itemize}
+
+In summary, the network has \(1,256\) units, \(64,660\) connections, but only \(9,760\) free parameters.
+
+
+\section*{Considerations}
+
+\subsection*{Costs}
+
+% ``Most misclassifications are due to erroneous segmentation of the image into individual characters [i.e., errors in preprocessing]. Segmentation is a very difficult problem, especially when the characters overlap extensively. Other mistakes are due to ambiguous patterns, low resolution effects, or writing styles not present in the training set.''
+
+The authors' approach, while innovative, comes with several notable limitations.
+
+\begin{itemize}
+    \item Performance depends heavily on quality of preprocessing and segmentation
+    \item System may fail on writing styles not represented in training data
+    \item Low \(16 \times 16\) resolution input may lose important details in some cases
+\end{itemize}
+
+% What are the risks? 
+% How much will it cost?
+% How long will it take?
+% What are the mid-term and final “exams” to check for success? 
+
+\subsection*{Benefits}
+
+% ``As can be seen in Figure 3, the convergence is extremely quick, and shows that backpropagation \textit{can} be used on fairly large tasks with reasonable training times. This is due in part to the high redundancy of real data.''
+
+The system introduces numerous advantages over prior approaches.
+
+\begin{itemize}
+    \item Faster training times compared to previous approaches due to fewer parameters
+    \item No need for manual feature engineering or hand-tuned constants
+    \item Robust to variations in digit position and style through weight sharing
+    \item Achieves state-of-the-art performance while requiring minimal preprocessing
+    \item Architecture is simpler and more general than previous approaches
+\end{itemize}
+
+\section*{Impact}
+% Who cares? If you are successful, what difference will it make?
+This paper introduced several key concepts that became foundational to modern deep learning and computer vision.
+
+\begin{itemize}
+    \item The concept of convolutional neural networks (CNNs) with learned features, demonstrating that end-to-end learning was possible without hand-engineered features
+    \item Weight sharing and feature maps, which dramatically reduced the number of parameters while maintaining shift invariance
+    \item Practical evidence that backpropagation could work effectively on large-scale pattern recognition tasks
+\end{itemize}
+
+These innovations laid crucial groundwork for modern deep learning architectures. The concepts introduced here - particularly CNNs with weight sharing - have become standard components in image recognition, computer vision, and many other machine learning applications. The success of this approach helped spark renewed interest in neural networks and contributed to the deep learning revolution of the following decades.
+
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
