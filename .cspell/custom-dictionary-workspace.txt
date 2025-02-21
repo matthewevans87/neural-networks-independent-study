@@ -3,4 +3,5 @@ backpropagation
 Convolutional
 Heilmeier
 inproceedings
+Krizhevsky
 Rumelhart

@@ -1,0 +1,148 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}  % filepath: /Users/matthewevans/dev/academics/neural-networks-independent-study/krizhevsky-2012/krizhevsky-2012.tex
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{positioning,matrix}
+\geometry{a4paper, margin=1in}
+
+\title{
+    Response to Krizhevsky et al., (2012) \\
+}
+\author{Matthew Evans}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+% What are you trying to do? Articulate your objectives using absolutely no  jargon. 
+In \textit{ImageNet Classification with Deep Convolutional Neural Networks}, Krizhevsky et al.\cite{NIPS2012_c399862d} propose a novel machine learning architecture for object recognition within images. Their approach leverages a combination of techniques which enable the system, though complex (i.e., high parameter count), to generalize well (i.e., low variance). Their work is showcased in the context of the ImageNet LSVRS-2010 contest\footnote{The LSVRS is the Large Scale Visual Recognition Challenge, an annual competition in which teams compete to achieve the highest accuracy on several computer vision tasks.}.
+
+\section*{Approach}
+% How is it done today, and what are the limits of current practice?
+% What is new in your approach and why do you think it will be successful? 
+The authors identify four specific design choices, detailed below, which enabled their model to achieve state of the art performance in Top-1 and Top-5\footnote{Top-1 accuracy measures the percentage of cases where the model's highest probability prediction matches the correct label. Top-5 accuracy measures the percentage of cases where the correct label appears among the model's five highest probability predictions.} accuracy.
+
+\subsection*{ReLU Nonlinearity}
+Like other learning models, neural networks learn parameters by iteratively minimizing a loss function. The magnitude and direction of a parameter's adjustment at each iteration is primarily dictated by the slope of the gradient of the loss function at the parameter values computed in the preceding iteration. The loss function being minimized is a linear combination of the network's features \(X\) and weights \(W\), i.e., \(W^TX\). To enable the network to classify \textit{non}-linearly separable data, the linear combination is passed through a non-linear \textit{activation function} such as \(\tanh(x)\)~\ref{fig:tanh} or the sigmoid function~\ref{fig:sigmoid}, both of which are continuous and differentiable on \(\mathbb{R}\). However, at \(x\) values far from the origin, both of these classical activation functions have gradients very close to zero (i.e., they are nearly flat), and as a result, the weight adjustment from iteration to iteration is virtually zero, causing the network to stop learning. This is known as the vanishing gradient problem, and, at these extreme \(x\) values, we say that the function is \textit{saturated}.
+
+For deep networks with many parameters, such as AlexNet, the vanishing gradient problem makes learning nearly impossible at deeper layers. To overcome this, the authors leverage the \textit{non}-saturating \textit{Rectified Linear Unit} function, or \textbf{ReLU}~\ref{fig:relu}. In addition to avoid saturation and the vanishing gradient problem, which accelerates learning, the ReLU function is computationally simpler than either of the exponential classical functions mentioned, further reducing training time.
+\begin{figure}[h]
+    \begin{minipage}{0.33\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.7,baseline]
+            \draw[->] (-3,0) -- (3,0) node[right] {$x$};
+            \draw[->] (0,-1.5) -- (0,1.5) node[above] {$y$};
+            \draw[blue, domain=-3:3] plot (\x, {tanh(\x)});
+        \end{tikzpicture}
+        \caption{tanh(x)}
+        \label{fig:tanh}
+        \begin{equation*}
+            f(x) = \tanh(x)
+        \end{equation*}
+    \end{minipage}%
+    \begin{minipage}{0.33\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.7,baseline]
+            \draw[->] (-3,0) -- (3,0) node[right] {$x$};
+            \draw[->] (0,-1.5) -- (0,1.5) node[above] {$y$};
+            \draw[red, domain=-3:3] plot (\x, {1/(1+exp(-\x))});
+        \end{tikzpicture}
+        \caption{sigmoid(x)}
+        \label{fig:sigmoid}
+        \begin{equation*}
+            f(x) = \frac{1}{1+e^{-x}}
+        \end{equation*}
+    \end{minipage}%
+    \begin{minipage}{0.33\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.7,baseline]
+            \draw[->] (-3,0) -- (3,0) node[right] {$x$};
+            \draw[->] (0,-1.5) -- (0,1.5) node[above] {$y$};
+            \draw[green, domain=-3:0] plot (\x, 0);
+            \draw[green, domain=0:1.5] plot (\x, \x);
+        \end{tikzpicture}
+        \caption{relu(x)}
+        \label{fig:relu}
+        \begin{equation*}
+            f(x) = \max(0,x)
+        \end{equation*}
+    \end{minipage}
+\end{figure}
+
+
+\subsection*{Training on Multiple GPUs}
+Learning models, particularly in object detection, have historically been constrained by the availability of labeled training data. The ImageNet LSVRC-2010 dataset, with its 1.2 million human-labeled images, provided the scale needed for training the AlexNet model. However, the sheer size of this dataset and the model's parameter count demanded parallel processing across two GPUs. While this dual-GPU architecture enabled training a more sophisticated network than possible on a single GPU, it introduced communication overhead between the processors. To optimize performance, the authors selectively limited inter-GPU connections between certain layers, using cross-validation to balance the improved accuracy of a more complex model against the computational costs of GPU communication.
+
+
+\subsection*{Local Response Normalization}
+While ReLUs do not require input normalization to prevent saturation, the authors found that implementing a local normalization scheme improved the model's ability to generalize. Their approach, called Local Response Normalization (LRN), creates competition between neuron activations at the same spatial position across adjacent feature maps.
+
+Given a neuron activation, the normalized response is calculated using adjacent kernel maps. This normalization scheme implements a form of lateral inhibition, similar to that observed in biological neurons, where strong activations inhibit neighboring neurons' responses.
+
+
+\subsection*{Overlapping Pooling}
+
+Pooling layers in convolutional neural networks reduce dimensionality by summarizing (i.e., down sampling) groups of neighboring neurons within a feature map by returning the maximum value within each group.
+
+For example, consider the following 4x4 feature matrix and its max-pooled representation with a 2x2 window and stride of 2:
+
+\begin{equation*}
+    \begin{bmatrix}
+        6  & 2  & 3  & 8  \\
+        5  & 1  & 7  & 4  \\
+        9  & 10 & 11 & 16 \\
+        13 & 14 & 15 & 12
+    \end{bmatrix}
+    \xrightarrow{\text{max-pool}}
+    \begin{bmatrix}
+        6  & 8  \\
+        14 & 16
+    \end{bmatrix}
+\end{equation*}
+
+In traditional approaches, these summaries are computed over non-overlapping regions, such as in the above example. The authors instead propose an overlapping scheme where the stride length \(s\) between pooling operations is smaller than the size \(z\) of the pooling window (specifically, \(s=2\) and \(z=3\)). This creates a situation where each pooling operation shares input values with adjacent pooling operations. In addition to improved prediction accuracy, the overlapping scheme appeared to provide a regularizing effect, making the model more resistant to overfitting.
+
+
+\subsection*{Reducing Overfitting}
+The authors' model contained 60 million parameters, making it particularly susceptible to overfitting without specific mitigating techniques, which they addressed through two key strategies.
+
+\subsubsection*{Dropout}
+Dropout is a regularization technique which randomly deactivates a proportion of neurons (and their connections) during training, effectively creating an ensemble of thinned networks. During each training iteration, the authors set the output of each hidden neuron to zero with probability 0.5, forcing the network to learn with only half of its neurons active, which prevents complex co-adaptations (i.e., neurons becoming overly dependent on specific neurons in previous layers) and reduces overfitting. At test time, all neurons are used but their outputs are multiplied by 0.5 to compensate for the fact that twice as many of them are active compared to training time.
+
+\subsubsection*{Data Augmentation}
+To artificially expand their training dataset, the authors employed label-preserving transformations of the training images. The first approach involved extracting random 224x224 patches from the (already down-sampled) 256x256 images and horizontally flipping them, effectively creating a more diverse set of training examples. Additionally, they altered the RGB pixel intensities using PCA to approximate natural variations in illumination, further augmenting the dataset's variety while maintaining label validity.
+
+\section*{Considerations}
+The authors' approach, while groundbreaking, faced several notable limitations.
+
+\begin{itemize}
+    \item \textbf{Computational Cost:} The training process required 5-6 days, making hyperparameter optimization extremely time-consuming.
+
+    \item \textbf{Input Constraints:} The architecture required fixed 256x256 pixel inputs, necessitating image down-sampling and cropping that resulted in loss of potentially valuable information.
+
+    \item \textbf{Overfitting Risk:} With 60 million parameters, the model was highly susceptible to overfitting, requiring additional techniques like data augmentation and dropout for regularization.
+\end{itemize}
+
+
+
+% What are the risks? 
+% How much will it cost?
+% How long will it take?
+% What are the mid-term and final “exams” to check for success? 
+
+
+\section*{Impact}
+% Who cares? If you are successful, what difference will it make?
+AlexNet's publication marked a pivotal moment in computer vision and deep learning. The architecture demonstrated unprecedented accuracy on the ImageNet dataset, reducing the error rate by nearly half compared to previous methods. This success helped trigger the deep learning revolution, leading to widespread adoption of deep neural networks across various domains. The paper's innovative techniques—particularly ReLU activation, dropout regularization, and GPU implementation—became standard practices in neural network design. As of this writing, the paper has garnered over 170,000 citations, reflecting its foundational influence on modern machine learning architectures and practices.
+
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
