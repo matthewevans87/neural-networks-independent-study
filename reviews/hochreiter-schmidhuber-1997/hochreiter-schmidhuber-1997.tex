@@ -41,7 +41,7 @@ LSTM's key innovation is the \textit{memory cell}, which maintains information o
 
 \subsubsection*{Memory Cells and Gates}
 
-LSTM memory cells are designed to preserve information across time by default, only modifying it when necessary. Central to this design is the self-connected unit, or "constant error carousel" (CEC), which ensures consistent gradient flow during backpropagation. The authors' architecture includes an input gate, which controls when new information enters the memory cell, and an output gate, which controls when stored information is read out.
+LSTM memory cells are designed to preserve information across time by default, only modifying it when necessary. Central to this design is the self-connected unit, or \textit{constant error carousel} (CEC), which ensures consistent gradient flow during backpropagation. The authors' architecture includes an input gate, which controls when new information enters the memory cell, and an output gate, which controls when stored information is read out.
 
 Gates, whose parameters are learnable, use multiplicative operations to regulate the reading and writing of memory cells \(c_t\). This structure allows the network to selectively retain, access, or discard information, making it well-suited for tasks involving long-range dependencies. The result is a model that is both robust and trainable, addressing key limitations of traditional RNNs.
 
