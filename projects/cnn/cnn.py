@@ -36,6 +36,9 @@ class CNN(nn.Module):
         # Output layer
         self.fc2 = nn.Linear(hidden_units, 10)
 
+        # Initialize weights
+        self._initialize_weights()
+
     def forward(self, x):
         # Input shape: [batch_size, 1, 28, 28]
         x = self.relu(self.conv1(x))  # Apply convolution and ReLU
@@ -48,6 +51,16 @@ class CNN(nn.Module):
         x = self.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain('relu'))
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain('relu'))
+                nn.init.constant_(m.bias, 0)
 
 
 def train(model, epochs=10, batch_size=32, hidden_units=20, learning_rate=0.01):
