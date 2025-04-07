@@ -1,0 +1,117 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{positioning,matrix,decorations.pathreplacing}
+\geometry{a4paper, margin=1in}
+
+\title{
+    Response to Bahdanau, Cho, Bengio (2016) \\
+}
+\author{Matthew Evans}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+Translating between languages is challenging because words do not align one-to-one, and their order often varies. Building on earlier work by Cho et. al (2014)\cite{cho2014}, the Bahdanau et. al propose a new approach\cite{bahdanau2016} that avoids summarizing an entire sentence with one fixed snapshot, and instead creates a flexible summary for each translated word. This design allows the model to scan the entire original sentence and focus on the most relevant parts when generating each word. In doing so, the approach aims to capture the true meaning of the input even when word order differs significantly between languages.
+
+% % The problem or issue that the authors' work addresses and what they aimed to achieve, and be able to articulate problem or issue using absolutely no technical jargon.
+% - Builds on prior work (Cho2014)
+% - Enables context vectors of variable length
+% - Introduces attention model to the RNN encoder/decoder
+% - Problem: Translation is not word for word; even if it were, source and target languages words aren't always in the same order.
+% - Solution: Enable model to look at input sentence and focus attention on specific source words (regardless of sentence position) when generating output sentence.
+
+
+\section*{Approach}
+\subsection*{Prior Work}
+Earlier work in neural machine translation, particularly the RNN Encoder-Decoder model introduced by Cho et al. (2014), laid the foundation for generating translations from a source sentence. In this framework, an encoder RNN processes the input sentence and compresses it into a fixed-length context vector, denoted by $\mathbf{c}$, which is intended to capture all the necessary information. The decoder RNN then uses this single vector to generate the output sentence, word by word.
+
+\[
+    \mathbf{c}= \tanh(\mathbf{W}\mathbf{h}^{\langle T \rangle})
+\]
+
+Here, \(\mathbf{h}^{\langle T \rangle}\) is the hidden state of the encoder RNN and \(\mathbf{W}\) is a learned weight matrix. Thus, the fixed-length context vector \(\mathbf{c}\) acts as a lossy compression of the entire input sequence, forcing the model into a ``hard alignment'' that obscures intricate, variable word-to-word correspondences, which becomes especially problematic for longer sentences with critical nuanced dependencies.
+
+% \subsection*{Prior Work}
+% % how things were done prior to the innovation described in the paper.
+% - Cho 2014
+% - Quick review of prior model's math
+
+\subsection*{Novelty}
+The novel approach introduced by the authors centers on an attention-based mechanism that computes a variable-length context for each target word, rather than compressing the entire source sentence into a single fixed-length vector. For instance, the context vector for the $i$-th target word is defined as
+\[
+    \mathbf{c}_i = \sum_{j=1}^{T_x} \alpha_{ij} \mathbf{h}_j,
+\]
+where the alignment weights $\alpha_{ij}$ are determined via a differentiable scoring function. This mechanism enables the model to focus on different terms of the source sentence (indexed by \(j=1, ..., T_x\)) as needed while keeping that every layer of the network is fully differentiable and trainable.
+
+Furthermore, the model employs a bidirectional RNN architecture that processes the input sentence in both forward and backward directions. By combining these two perspectives, the model overcomes the challenges posed by differing grammatical sequences in languages. Unlike earlier methods that used neural components as auxiliary features in statistical machine translation, this approach delivers a fully trainable translation system, promising more coherent and contextually accurate translations.
+
+% \subsection*{Novelty}
+% % what is novel about the author's approach, and what about it is particularly promising.
+% - attention based context
+% - variable length context
+% - all layers are differentiable and thus trainable
+% - provides a fully trainable translation model rather than just being a useful extra feature to be used in other SMT models
+% - trains two rnns: one backward, one forward. Enables model sequential context regardless from both directions; overcomes the issue that not all languages have the same gramaticaly sequence.
+% - overview of new model's math
+
+
+\section*{Considerations}
+Despite the promising aspects of the proposed model, several potential risks and weaknesses deserve attention.
+
+\begin{itemize}
+    \item The authors note that due to the tendency of RNNs to better represent recent inputs, the annotation $\mathbf{h}_j$ is biased toward the words surrounding $x_j$. This reliance on local context may be problematic in capturing long-range dependencies, and its universal applicability remains uncertain.
+    \item The model employs a vocabulary that is twice the size of that used in previous work by \cite{cho2014}. This expansion may have contributed significantly to its performance gains on a training set of merely 15,000 words, raising the question of whether the observed improvements are primarily due to architectural innovations or simply a result of increased lexical coverage.
+    \item The authors acknowledge that handling unknown or rare words continues to be a challenge. While the model outperforms state-of-the-art systems such as Moses on sentences composed solely of known vocabulary, Moses maintains an edge when no such restrictions are applied. This indicates that further enhancements are necessary to address rare word occurrences, which is crucial for the model to achieve consistently high performance in more diverse and realistic translation contexts.
+\end{itemize}
+% % the risks and/or weaknesses of the author's approach.
+% - "Due to the tendency of RNNs to better represent recent inputs, the annotation hj will be focused on the words around xj". What's up with this? Seems suspect.
+% - They used a vocab 2x the size of previous cho paper. Curious as to the impact this had over the 15k word training set; i.e., does this model shine because it has a 2x size vocab?
+% - "One of challenges left for the future is to better handle unknown, or rare words. This will be required for the model to be more widely used and to match the performance of current state-of-the-art machine translation systems in all contexts." Their model performed better than SOTA (Moses) when only considering sentences with known vocab words, but, without this restriction, Moses still wins.
+
+\section*{Strengths}
+The proposed approach offers several notable advantages.
+\begin{itemize}
+    \item It eliminates the need for a separate monolingual dataset, as required by systems like Moses, thereby streamlining the training process.
+    \item By employing a variable-length context vector, the model avoids the lossy semantic compression inherent in fixed-length representations, allowing it to capture a more faithful summary of the source sentence.
+    \item The integration of an attention mechanism enables soft-alignment, which permits the model to selectively focus on the most relevant input words for each output word, irrespective of their position in the sentence. This targeted focus not only enhances translation accuracy but also accommodates the natural variability in word order across different languages.
+\end{itemize}
+
+% \section*{Strengths}
+% % the key benefits and/or strengths of the author's approach
+% - Doesn't require the monolingual dataset that Moses does.
+% - Enables variable length context vector which avoids the unnatural lossy semantic compression incurred by a fixed length context
+% - introduces attention model to focus on specific input words when generating each output word, regardless of the position of those one or more input words in the source sentence. (soft-alignment)
+
+\section*{Measures of Success}
+The authors validated their findings using quantitative evaluations based on BLEU scores. Their experiments demonstrated that the proposed model outperformed the earlier RNN Encoder-Decoder model described in \cite{cho2014} across several test sets. In particular, when translations were evaluated on sentences composed entirely of known vocabulary, the model not only surpassed its predecessor but also achieved performance levels comparable to, or even exceeding, those of the state-of-the-art phrase-based system, Moses. However, as mentioned, this success was contingent on filtering out sentences with unknown words, which highlights a limitation in handling rare or unseen vocabulary.
+% % the measures of success the authors used to validate their findings.
+% - Their model performed well in performance measuring tests (which ones?)
+% - Did better than Cho2014's model
+% - Better than state-of-the-art when sentences with unknown words were filtered out. (a limitation)
+
+\section*{Impact}
+These innovations revolutionized sequence modeling and NLP by removing the need for monolingual datasets and enabling variable-length context vectors, improving translation of long sentences and overall performance.
+
+The self-attention mechanism of the Transformer architecture \cite{DBLP:journals/corr/VaswaniSPUJGKP17} was built on the idea of dynamically focusing on relevant parts of the input—a concept first popularized by Bahdanau et al.\cite{bahdanau2016}
+
+Beyond translation, the success of attention has paved the way for major pre-trained language models like BERT\cite{DBLP:journals/corr/abs-1810-04805} and the GPT series\cite{radford2018improving}.
+
+In summary, these advancements have streamlined training processes, enhanced the capacity to capture complex linguistic structures, and significantly improved performance across numerous applications in NLP and beyond.
+
+% % the impact of the innovations described in the paper.
+% - transformer architecture
+% - LLM/GPTs use of attention
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
