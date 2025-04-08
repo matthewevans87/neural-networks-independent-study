@@ -1,0 +1,122 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{positioning,matrix,decorations.pathreplacing}
+\geometry{a4paper, margin=1in}
+
+\title{
+    Response to Vaswani et. al (2017) \\
+}
+\author{Matthew Evans}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+% The problem or issue that the authors' work addresses and what they aimed to achieve, and be able to articulate problem or issue using absolutely no technical jargon.
+Previous methods\cite{cho2014} for machine translation processed text sequentially, yielding slow learning, especially for longer texts. Vaswani et al.\cite{DBLP:journals/corr/VaswaniSPUJGKP17} proposed a framework that focuses on key parts of the text simultaneously, enabling faster training and better translations through parallel processing. This approach simplified the process and enhanced performance while reducing architectural complexity.
+
+\section*{Approach}
+\subsection*{Prior Work}
+Prior methods, such as the Extended Neural GPU\cite{NIPS2016_fb8feff2}, ByteNet\cite{DBLP:journals/corr/KalchbrennerESO16}, and ConvS2S\cite{DBLP:journals/corr/GehringAGYD17}, relied on convolutional architectures. While these models computed representations for all positions simultaneously, their ability to relate distant positions scaled poorly—linearly for ConvS2S and logarithmically for ByteNet. This inefficiency made capturing long-range dependencies challenging, requiring deeper networks and increasing computational costs.
+
+End-to-end memory networks\cite{NIPS2015_8fb21ee7} explored the use of recurrent attention mechanisms rather than strict sequence-aligned recurrence, showing promising results on simpler language tasks such as question answering and language modeling. However, these approaches still inherited the limitations of recurrent processing, where the sequential nature of computation constrains parallelization and extends training times. This sequential bottleneck not only hinders the efficient learning of long-range relationships but also prevents models from fully utilizing the capabilities of modern GPU hardware for parallelization.
+
+\subsection*{Novelty}
+% % what is novel about the author's approach, and what about it is particularly promising.
+
+The authors' \textit{Transformer} model introduces a new architecture for sequence transduction tasks (e.g., translation) that entirely removes recurrence and convolution instead relying only on attention mechanisms, particularly \textit{self-attention}, to model relationships between input and output tokens.
+
+The proposed approach replaces sequence-aligned recurrent or convolutional networks with self-attention mechanisms, enabling simultaneous processing of all token positions via optimized matrix operations. This design significantly reduces training time and maximizes the use of efficient GPU operations.
+
+The Transformer retains the encoder-decoder framework. Its encoder transforms the input sequence \(x = (x_1, \dots, x_n)\) into continuous representations \(z = (z_1, \dots, z_n)\) using stacked self-attention and feed-forward layers, with positional encodings adding order information. Its decoder generates the output sequence \(y = (y_1, \dots, y_m)\) auto-regressively, considering both \(z\) and previously generated tokens. This design enhances translation quality and leverages parallel processing for efficiency in sequence transduction tasks.
+
+
+\subsubsection*{Self-Attention}
+The transformer model uses self-attention, which enables every token to directly attend to every other token in the sequence, regardless of distance. Formally, given input embeddings $X \in \mathbb{R}^{n \times d_{\text{model}}}$, we compute:
+
+\[
+    Q = XW^Q, \quad K = XW^K, \quad V = XW^V
+\]
+
+where $W^Q, W^K, W^V \in \mathbb{R}^{d_{\text{model}} \times d_k}$ are learned projection matrices.
+
+The scaled dot-product attention\footnote{The authors use a form of attention known as multiplicative attention which lends itself well to the optimized hardware offered by GPUs. The authors scale the multiplicative attention by a factor of \(\frac{1}{\sqrt{d_k}}\) in an effort to counteract the risk of vanishing gradients.} is then
+\[
+    \text{Attention}(Q, K, V) = \text{softmax}\left( \frac{QK^\top}{\sqrt{d_k}} \right) V.
+\]
+This operation allows each token to attend to all others in the sequence via the dot products between query \(Q\) and key vectors \(K\).
+
+
+\subsubsection*{Multi-Head Attention}
+The authors extend the use of attention to so-called \textit{multi-head attention}, enabling the model to capture multiple types of relationships in parallel by applying multiple attention functions simultaneously. For each \textit{head} $i \in \{1, \dots, h\}$:
+\[
+    Q_i = X W_i^Q,\quad K_i = X W_i^K,\quad V_i = X W_i^V
+\]
+The attention for each head is
+\[
+    \text{head}_i = \text{Attention}(Q_i, K_i, V_i) = \text{softmax}\left( \frac{Q_i K_i^\top}{\sqrt{d_k}} \right) V_i.
+\]
+Finally, the multi-head attention is given as
+\[
+    \text{MultiHead}(X) = \text{Concat}(\text{head}_1, \dots, \text{head}_h) W^O
+\]
+where $W^O \in \mathbb{R}^{hd_v \times d_{\text{model}}}$ is a learned output projection.
+
+
+\subsubsection*{Positional Encoding}
+To inject information about token order into the model (which lacks recurrence or convolution), the authors add \textit{positional encodings} to the input embeddings. These encodings use \(sin\) and \(cos\) functions of different frequencies:
+
+\[
+    \text{PE}_{(pos,\,2i)} = \sin\left(\frac{pos}{10000^{2i / d_{\text{model}}}} \right)
+\]
+\[
+    \text{PE}_{(pos,\,2i+1)} = \cos\left(\frac{pos}{10000^{2i / d_{\text{model}}}} \right)
+\]
+
+Where \(\text{pos}\) is the position (0-indexed) in the sequence, \(i\) is the dimension index, and \(d_{\text{model}}\) is the dimensionality of the model (e.g., 512).
+The positional encoding $\text{PE}(pos) \in \mathbb{R}^{d_{\text{model}}}$ is added element-wise to the input embedding $E(pos)$:
+
+\[
+    X_{pos} = E(pos) + \text{PE}(pos)
+\]
+
+\section*{Strengths}
+% the key benefits and/or strengths of the author's approach
+The Transformer model offers several notable advantages over prior approaches.
+\begin{itemize}
+    \item \textbf{Computational Efficiency}: Highly parallelizable architecture enables better performance at a fraction of the training cost.
+    \item \textbf{Training Efficiency}: Trains 3 to 5 times faster compared to recurrent or convolutional models.
+    \item \textbf{Interpretability}: Attention weights reveal which input tokens the model attends to, offering transparency into decision-making.
+    \item \textbf{State-of-the-Art Performance}: Achieves higher BLEU scores than prior models, surpassing previous best results by over 2 BLEU on English-to-German translation.
+\end{itemize}
+
+\section*{Considerations}
+% the risks and/or weaknesses of the author's approach.
+The authors' approach, while groundbreaking, is not without its challenges.
+\begin{itemize}
+    \item \textbf{Quadratic Complexity}: Self-attention scales as $\mathcal{O}(n^2)$ in time and memory, limiting efficiency on long sequences.
+    \item \textbf{Lack of Sequential Inductive Bias}: Without recurrence or convolution, the model forfeits a useful sequential bias that is intrinsic to RNNs.
+    \item \textbf{Auto-Regressive Inference Bottleneck}: Despite fast training, decoding remains sequential, slowing inference in generation tasks.
+    \item \textbf{Limited Local Bias}: Unlike CNNs or RNNs, the model does not naturally emphasize local context, which may reduce efficiency in some domains.
+\end{itemize}
+
+\section*{Measures of Success}
+% the measures of success the authors used to validate their findings.
+The authors validated their approach using standard translation quality metrics and training efficiency benchmarks. They measured translation performance primarily via the BLEU score, where their ``big'' model reached 28.4 on the WMT 2014 English-to-German task and 41.0 on the English-to-French task, surpassing previous state-of-the-art results by more than 2 BLEU points. Notably, the big model was trained in just 3.5 days using 8 P100 GPUs, while even their base model (trained in 12 hours) outperformed competitive systems at a fraction of the training cost (measured in FLOPs).
+
+\section*{Impact}
+% the impact of the innovations described in the paper.
+The Transformer model introduced by Vaswani et al.\ in \textit{Attention Is All You Need} has had a profound and lasting impact on the field of machine learning, particularly natural language processing (NLP). Its attention-based architecture replaced recurrent and convolutional structures, enabling significantly greater parallelism and scalability. This innovation laid the foundation for nearly all modern large language models, including BERT\cite{DBLP:journals/corr/abs-1810-04805}, GPT\cite{radford2018improving}, T5\cite{DBLP:journals/corr/abs-1910-10683}, and others, which dominate NLP benchmarks and real-world applications. The Transformer also catalyzed a paradigm shift toward pretraining on large corpora followed by task-specific fine-tuning. Beyond NLP, it has been successfully adapted to other modalities such as vision (Vision Transformers), audio, and multimodal systems. Moreover, its computational characteristics have driven extensive research into efficient attention mechanisms, model compression, and interpretability. The Transformer thus represents a unifying architecture with cross-domain applicability and has redefined the landscape of deep learning.
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
