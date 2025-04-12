@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, Dataset
 import time
 from datetime import timedelta
 import os
+import argparse
 
 class TextDataset(Dataset):
     def __init__(self, text: str, sequence_length=50):
@@ -29,7 +30,7 @@ class TextDataset(Dataset):
         return text
 
 class RNN(nn.Module):
-    def __init__(self, vocab_size, embedding_dim=128, hidden_dim=256, num_layers=2):
+    def __init__(self, vocab_size: int, embedding_dim=128, hidden_dim=256, num_layers=2):
         super().__init__()
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
@@ -51,7 +52,7 @@ class RNN(nn.Module):
         return output, hidden
     
 
-def save_model(model, path='model.pth'):
+def save_model(model: RNN, path='model.pth'):
     """Save model weights and vocabulary information."""
     torch.save({
         'model_state_dict': model.state_dict(),
@@ -78,7 +79,7 @@ def load_model(path='model.pth'):
     print(f'Model loaded from {path}')
     return model
 
-def generate_sample(model, dataset: TextDataset, start_text="The", length=100, device='cpu'):
+def generate_sample(model: RNN, dataset: TextDataset, start_text="The", length=100, device='cpu'):
     """Generate a sample text sequence using the trained model."""
     model.eval()
     input_sequence = torch.tensor([dataset.charToIdx[c] for c in start_text], device=device).unsqueeze(0)
@@ -90,7 +91,7 @@ def generate_sample(model, dataset: TextDataset, start_text="The", length=100, d
             output, hidden = model(input_sequence, hidden)
             output = output[:, -1, :]  # Get the last character's output
             predicted_idx = output.argmax(dim=-1).item()
-            generated_text += dataset.idx2char[predicted_idx]
+            generated_text += dataset.idxToChar[predicted_idx]
             input_sequence = torch.tensor([[predicted_idx]], device=device)
 
     return generated_text
@@ -216,21 +217,50 @@ def evaluate_model(model, test_dataset):
     
     return avg_loss, accuracy
 
-# Main code
-MODEL_PATH = 'model.pth'
+def main():
+    parser = argparse.ArgumentParser(description="RNN Text Generation")
+    parser.add_argument("mode", choices=["train", "evaluate", "generate"], nargs="?", default="evaluate", help="Mode of operation: train, evaluate, or generate (default: generate)")
+    args = parser.parse_args()
 
-# Try to load existing model first
-model = load_model(MODEL_PATH)
+    MODEL_PATH = 'model.pth'
 
-if model is None:
-    # No saved model found, train a new one
-    train_dataset = TextDataset(TextDataset.get_text_from_path('./data/train.txt'))
-    model = RNN(train_dataset.vocab_size)
-    train_model(model, train_dataset, epochs=10, batch_size=64, learning_rate=0.002, device='cuda' if torch.cuda.is_available() else 'cpu')
-    
-    test_dataset = TextDataset(TextDataset.get_text_from_path('./data/test.txt'))
-    evaluate_model(model, test_dataset)
-else:
-    # Use loaded model and vocabulary
-    test_dataset = TextDataset(TextDataset.get_text_from_path('./data/test.txt'))
-    evaluate_model(model, test_dataset)
+    if args.mode == "train":
+        train_dataset = TextDataset(TextDataset.get_text_from_path('./data/train.txt'))
+        model = load_model(MODEL_PATH)
+        if model is None:
+            model = RNN(train_dataset.vocab_size)
+        train_model(model, train_dataset, epochs=10, batch_size=64, learning_rate=0.002, device='cuda' if torch.cuda.is_available() else 'cpu')
+        test_dataset = TextDataset(TextDataset.get_text_from_path('./data/test.txt'))
+        evaluate_model(model, test_dataset)
+
+    elif args.mode == "evaluate":
+        model = load_model(MODEL_PATH)
+        if model is None:
+            print("No saved model found. Please train the model first.")
+            return
+        test_dataset = TextDataset(TextDataset.get_text_from_path('./data/test.txt'))
+        evaluate_model(model, test_dataset)
+
+    elif args.mode == "generate":
+        model = load_model(MODEL_PATH)
+        if model is None:
+            print("No saved model found. Please train the model first.")
+            return
+        train_dataset = TextDataset(TextDataset.get_text_from_path('./data/train.txt'))
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        model.to(device)
+
+        print("Entering text generation mode (REPL). Type 'exit' to quit.")
+        while True:
+            seed_phrase = input("Enter a seed phrase: ")
+            if seed_phrase.lower() == "exit":
+                break
+            try:
+                sequence_length = int(input("Enter sequence length: "))
+                generated_text = generate_sample(model, train_dataset, start_text=seed_phrase, length=sequence_length, device=device)
+                print(f"Generated text:\n{generated_text}\n")
+            except ValueError:
+                print("Invalid sequence length. Please enter an integer.")
+
+if __name__ == "__main__":
+    main()
