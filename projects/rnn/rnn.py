@@ -276,7 +276,7 @@ def evaluate_model(model, test_dataset, device='cpu'):
 
 def main():
     parser = argparse.ArgumentParser(description="RNN Text Generation")
-    parser.add_argument("mode", choices=["train", "evaluate", "generate"], nargs="?", default="evaluate", help="Mode of operation: train, evaluate, or generate (default: generate)")
+    parser.add_argument("mode", choices=["train", "evaluate", "generate"], nargs="?", default="generate", help="Mode of operation: train, evaluate, or generate (default: generate)")
     args = parser.parse_args()
 
     MODEL_PATH = 'model.pth'
