@@ -1,3 +1,9 @@
 {
-  "cSpell.words": ["Convolutional", "MNIST"]
+  "cSpell.words": ["Convolutional", "MNIST"],
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false
+  }
 }

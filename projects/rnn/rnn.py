@@ -8,11 +8,11 @@ import os
 import argparse
 
 class TextDataset(Dataset):
-    def __init__(self, text: str, sequence_length=50):
+    def __init__(self, text: str, sequence_length=50, charToIdx: dict[str, int]=None, idxToChar: dict[int, str]=None):
         chars = sorted(set(text))
-        self.charToIdx = {ch: i for i, ch in enumerate(chars)}
-        self.idxToChar = {i: ch for ch, i in self.charToIdx.items()}
-        self.vocab_size = len(chars)
+        self.charToIdx = charToIdx if charToIdx is not None else {ch: i for i, ch in enumerate(chars)}
+        self.idxToChar = idxToChar if idxToChar is not None else {i: ch for ch, i in self.charToIdx.items()}
+        self.vocab_size = len(self.charToIdx)
         self.data = [self.charToIdx[c] for c in text]
         self.seq_length = sequence_length
             
@@ -188,17 +188,26 @@ def train_model(model: RNN, dataset: TextDataset, epochs=10, batch_size=64, lear
     
     return model
 
-def evaluate_model(model, test_dataset):
+def evaluate_model(model, test_dataset, device='cpu'):
     model.eval()
     test_loader = DataLoader(test_dataset, batch_size=64)
     
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(reduction='sum')
     total_loss = 0
     correct_chars = 0
+    correct_top5_chars = 0  # Counter for top-5 accuracy
+    correct_top10_chars = 0  # Counter for top-10 accuracy
     total_chars = 0
     
+    # Progress tracking variables
+    total_batches = len(test_loader)
+    start_time = time.time()
+    
+    print(f"Evaluating model on {len(test_dataset)} examples ({total_batches} batches)...")
+    
     with torch.no_grad():
-        for inputs, targets in test_loader:
+        for i, (inputs, targets) in enumerate(test_loader):
+            inputs, targets = inputs.to(device), targets.to(device)
             outputs, _ = model(inputs)
             outputs_flat = outputs.view(-1, outputs.size(-1))
             targets_flat = targets.view(-1)
@@ -208,14 +217,62 @@ def evaluate_model(model, test_dataset):
             # Calculate top-1 accuracy
             _, predicted = outputs_flat.max(1)
             correct_chars += (predicted == targets_flat).sum().item()
+            
+            # Calculate top-5 accuracy
+            _, top5_predicted = outputs_flat.topk(5, dim=1)
+            correct_top5 = torch.zeros_like(targets_flat).bool()
+            for k in range(5):
+                correct_top5 = correct_top5 | (top5_predicted[:, k] == targets_flat)
+            correct_top5_chars += correct_top5.sum().item()
+            
+            # Calculate top-10 accuracy
+            _, top10_predicted = outputs_flat.topk(10, dim=1)
+            correct_top10 = torch.zeros_like(targets_flat).bool()
+            for k in range(10):
+                correct_top10 = correct_top10 | (top10_predicted[:, k] == targets_flat)
+            correct_top10_chars += correct_top10.sum().item()
+            
             total_chars += targets_flat.size(0)
+            
+            # Report progress every 10 batches
+            if i % 10 == 9 or i == total_batches - 1:
+                current_batch = i + 1
+                progress = current_batch / total_batches * 100
+                
+                # Calculate time estimates
+                elapsed_time = time.time() - start_time
+                batches_per_sec = current_batch / elapsed_time if elapsed_time > 0 else 0
+                remaining_batches = total_batches - current_batch
+                eta = remaining_batches / batches_per_sec if batches_per_sec > 0 else 0
+                
+                elapsed_str = str(timedelta(seconds=int(elapsed_time)))
+                eta_str = str(timedelta(seconds=int(eta)))
+                
+                # Current metrics
+                current_loss = total_loss / total_chars
+                current_perplexity = torch.exp(torch.tensor(current_loss))
+                current_accuracy = 100 * correct_chars / total_chars
+                current_top5_accuracy = 100 * correct_top5_chars / total_chars
+                current_top10_accuracy = 100 * correct_top10_chars / total_chars
+                
+                print(f'[{elapsed_str}] Batch: {current_batch}/{total_batches} ({progress:.1f}%) | '
+                      f'Loss: {current_loss:.4f} | Perplexity: {current_perplexity:.3f} | '
+                      f'Top-1: {current_accuracy:.2f}% | Top-5: {current_top5_accuracy:.2f}% | '
+                      f'Top-10: {current_top10_accuracy:.2f}% | ETA: {eta_str}')
     
-    avg_loss = total_loss / len(test_loader)
+    # Calculate final per-character loss and perplexity
+    avg_loss = total_loss / total_chars  # Per-character loss
     perplexity = torch.exp(torch.tensor(avg_loss))
     accuracy = 100 * correct_chars / total_chars
-    print(f'Test Loss: {avg_loss:.4f} | Perplexity: {perplexity:.3f} | Accuracy: {accuracy:.2f}%')
+    top5_accuracy = 100 * correct_top5_chars / total_chars
+    top10_accuracy = 100 * correct_top10_chars / total_chars
     
-    return avg_loss, accuracy
+    total_time = time.time() - start_time
+    print(f'\nEvaluation completed in {str(timedelta(seconds=int(total_time)))}')
+    print(f'Final Test Loss: {avg_loss:.4f} | Perplexity: {perplexity:.3f}')
+    print(f'Top-1 Accuracy: {accuracy:.2f}% | Top-5: {top5_accuracy:.2f}% | Top-10: {top10_accuracy:.2f}%')
+    
+    return avg_loss, accuracy, top5_accuracy, top10_accuracy
 
 def main():
     parser = argparse.ArgumentParser(description="RNN Text Generation")
@@ -238,7 +295,8 @@ def main():
         if model is None:
             print("No saved model found. Please train the model first.")
             return
-        test_dataset = TextDataset(TextDataset.get_text_from_path('./data/test.txt'))
+        train_dataset = TextDataset(TextDataset.get_text_from_path('./data/train.txt'))
+        test_dataset = TextDataset(TextDataset.get_text_from_path('./data/test.txt'), train_dataset.seq_length, train_dataset.charToIdx, train_dataset.idxToChar)
         evaluate_model(model, test_dataset)
 
     elif args.mode == "generate":
@@ -250,11 +308,14 @@ def main():
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         model.to(device)
 
-        print("Entering text generation mode (REPL). Type 'exit' to quit.")
+        print("Entering text generation mode (REPL). Type '-r' to choose a random seed, '-e' to quit.")
         while True:
             seed_phrase = input("Enter a seed phrase: ")
-            if seed_phrase.lower() == "exit":
+            if seed_phrase.lower() == "-e":
                 break
+            if seed_phrase.lower() == "-r":
+                seed_phrase = train_dataset.idxToChar[torch.randint(0, train_dataset.vocab_size, (1,)).item()]
+                print(f"Random seed phrase: {seed_phrase}")
             try:
                 sequence_length = int(input("Enter sequence length: "))
                 generated_text = generate_sample(model, train_dataset, start_text=seed_phrase, length=sequence_length, device=device)

@@ -25,5 +25,5 @@ def split_dataset(input_file, test_file, train_file, test_ratio):
     with open(train_file, 'w') as file:
         file.writelines(train_lines)
 
-split_dataset('./data/tinyshakespear.txt', './data/test.txt', './data/train.txt', 0.2)
+split_dataset('./data/tinyshakespeare.txt', './data/test.txt', './data/train.txt', 0.2)
 
