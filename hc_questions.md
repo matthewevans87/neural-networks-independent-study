@@ -2,7 +2,7 @@
 
 Overview:
 
-- Understand the problem or issue that the authors' work addresses and what they aimed to achieve, and be able to articulate problem or issue using absolutely no technical jargon.
+- Understand the problem or issue that the authors' work addresses and what they aimed to achieve, and be able to articulate the problem or issue using absolutely no technical jargon.
 
 Approach:
 
