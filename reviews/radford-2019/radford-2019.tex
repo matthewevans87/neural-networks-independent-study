@@ -1,0 +1,75 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{positioning,matrix,decorations.pathreplacing}
+\geometry{a4paper, margin=1in}
+
+\title{
+    Review of Radford et al. (2019) \\
+}
+\author{Matthew Evans}
+\date{May 1, 2025}
+
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+% - Understand the problem or issue that the authors' work addresses and what they aimed to achieve, and be able to articulate the problem or issue using absolutely no technical jargon.
+Most language systems first learn from vast unlabeled text (i.e., unsupervised), then rely on small labeled datasets (i.e., supervised) to adapt to each task—an approach that depends on costly annotations. Radford et al.\cite{radford2019language} argue this step is unnecessary, showing that with a simple natural-language prompt, a sufficiently large pre-trained model can tackle new tasks directly (i.e., zero-shot), without any labeled examples.
+
+\section*{Approach}
+\subsection*{Prior Work}
+% - Understand and articulate how things were done prior to the innovation described in the paper.
+The state-of-the-art systems before GPT-2 relied heavily on supervised fine-tuning of pre-trained representations. Initially, word embeddings (e.g., Word2Vec, GloVe) were computed and fed into task-specific classifiers. Subsequently, recurrent networks generated contextualized embeddings that could be transferred across tasks. More recently, Transformer models pre-trained via stacks of self-attention blocks have served as universal feature extractors. All of these approaches require labeled data for each downstream task, creating a bottleneck where annotated corpora are limited. In parallel, researchers applied unsupervised language models to commonsense reasoning and sentiment analysis, yet these methods still depended on task-specific adaptation.
+
+\subsection*{Novelty}
+% - Understand and articulate what is novel about the author's approach, and what about it is particularly promising.
+\subsubsection*{Key Idea}
+
+The core novelty of this work lies not in a new neural architecture but in a paradigm shift: by framing each downstream task as a natural-language prompt, a single, large transformer-based language model can perform diverse tasks in a zero-shot setting without any parameter or architecture modification. In effect, the conditional probability is extended from \(p(\text{output}\mid \text{input})\) to \(p(\text{output}\mid \text{input},\;\text{task})\), unifying pre-training and fine-tuning under the same unsupervised objective.
+
+This prompt-based transfer learning is particularly promising because it eliminates the reliance on costly labeled datasets and brittle task-specific fine-tuning. Given sufficient model scale and high-quality unlabeled data, the unsupervised training process reaches the same global optimum as supervised methods, yielding a generalist system that can be steered to new tasks on the fly. This approach dramatically reduces annotation overhead and engineering effort for adapting to novel tasks.
+
+\subsubsection*{Byte-Pair Encoding}
+The authors adopt a variant of byte-pair encoding (BPE) that enforces character-class boundaries, preventing merges between letters, digits, and punctuation. Standard BPE often produces redundant tokens such as “do” + “g.”, “do” + “g!”, or “do” + “g?”, which waste model capacity. Disallowing merges across these classes yields a more compact and robust vocabulary.
+
+\subsubsection*{WebText}
+To train GPT-2, the authors assembled \textit{WebText}: a large-scale corpus of web pages automatically scraped from URLs shared on Reddit posts with at least 3 karma. This heuristic uses community voting as an implicit quality filter, avoiding manual, task-specific preprocessing steps that other datasets employ for task-specific benchmarks.
+
+By following links rather than just post text, the process captures content from a wide range of external domains, ensuring topical and stylistic diversity. The fully automated collection process yields a high-quality, heterogeneous dataset without any supervised labels or ad hoc filtering rules. This approach to data curation underpins GPT-2's improved language modeling performance and robust zero-shot transfer, highlighting a scalable path to general-purpose pre-training.
+
+\section*{Considerations}
+% - Understand and articulate the risks and/or weaknesses of the author's approach.
+% - Understand and articulate the key benefits and/or strengths of the author's approach
+\begin{itemize}
+    \item While GPT-2 does not achieve SOTA on every benchmark, it delivers competitive zero-shot performance across diverse tasks, demonstrating strong generalization without fine-tuning.
+    \item Training the 1.5~billion-parameter model requires substantial computational and energy resources.
+    \item Effective pre-training depends on massive, high-quality unlabeled corpora, which may be difficult to obtain and curate.
+    \item High rates of duplicate content in web-scraped and benchmark datasets raise memorization concerns; although the authors' analysis indicates underfitting rather than rote recall, the risk of inflated performance remains.
+\end{itemize}
+
+\section*{Measures of Success}
+% - Understand and articulate the measures of success the authors used to validate their findings.
+The authors compared their unsupervised GPT-2 model with classical supervised models on a variety of benchmarks in different task domains achieving state-of-the-art performance in many categories.
+
+\begin{itemize}
+    \item \textbf{Language Modeling:} Evaluation used average per-token log-probability on held-out corpora, where the 1.5~B-parameter model outperformed prior best models on seven tasks out of eight benchmarks.
+    \item \textbf{Reading Comprehension:} Matched or exceeded three of four baseline systems on standard reading-comprehension benchmarks, demonstrating strong zero-shot understanding.
+    \item \textbf{Summarization:} Produced concise summaries by prefixing inputs with “TL;DR.” Although not yet on par with specialized systems, the unsupervised model delivered competitive results without any fine-tuning.
+    \item \textbf{Translation:} Exhibited emergent English-French translation despite only 10MB of French data in the training corpus (\(\approx 500\times\) smaller than typical unsupervised machine translation datasets), highlighting scalable cross-lingual capabilities.
+    \item \textbf{Question Answering:} Responded to QA prompts in a question-answer format. While performance remains below specialized QA systems, accuracy improves with model scale, indicating that zero-shot QA ability grows with parameter count.
+\end{itemize}
+
+\section*{Impact}
+The GPT-2 paper demonstrated that scaling transformer-only language models yields strong zero-shot task performance without any task-specific fine-tuning, fundamentally shifting NLP research toward large-scale unsupervised pre-training. Its results spurred widespread adoption of prompt-based methods, influenced the design of subsequent architectures (e.g., GPT-3), and drove substantial industry investment in training ever larger models.
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
