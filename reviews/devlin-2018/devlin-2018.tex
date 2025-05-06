@@ -1,0 +1,109 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{positioning,matrix,decorations.pathreplacing}
+\geometry{a4paper, margin=1in}
+
+\title{
+    Review of Devlin et al. (2018) \\
+}
+\author{Matthew Evans}
+\date{April 5, 2025}
+
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+% - Understand the problem or issue that the authors' work addresses and what they aimed to achieve, and be able to articulate the problem or issue using absolutely no technical jargon.
+Devlin et al. (2018) \cite{DBLP:journals/corr/abs-1810-04805} address the challenge of learning rich language representations that fully leverage both left and right context. Existing pre-training methods either read text in a single direction or fuse unidirectional models in a superficial way, limiting their ability to capture nuanced dependencies. To solve this, the paper introduces BERT (\textbf{B}idirectional \textbf{E}ncoder \textbf{R}epresentations from \textbf{T}ransformers), which uses a simple ``mask-and-predict'' approach alongside a sentence-ordering task to pre-train deep, bidirectional Transformer encoders. These representations can then be fine-tuned with minimal task-specific architecture changes, yielding strong gains across diverse language understanding problems.
+
+\section*{Approach}
+\subsection*{Prior Work}
+% - Understand and articulate how things were done prior to the innovation described in the paper.
+Prior to BERT, researchers pursued two main strategies for leveraging large unlabeled text: \textit{Unsupervised feature-based approaches}, which extract contextual embeddings to feed into task-specific models, and \textit{Unsupervised fine-tuning approaches}, which pre-train a language model and then tune all its parameters end-to-end on a downstream task.
+
+\paragraph{Unsupervised feature-based approaches}
+\begin{itemize}
+    \item \textbf{ELMo (Peters et al., 2018a)}\cite{DBLP:journals/corr/abs-1802-05365}: Builds context-sensitive word embeddings by concatenating independently trained left-to-right and right-to-left LSTM language models, and supplies these as additional features to downstream architectures.
+    \item \textbf{Melamud et al. (2016)}\cite{melamud-etal-2016-context2vec}: Propose a ``cloze''\footnote{A cloze task is a fill-in-the-blank exercise where selected words in a text are hidden and the model must predict the missing tokens using the surrounding context.} pre-training task using LSTMs to predict a missing word from both left and right context; like ELMo, it remains feature-based rather than deeply bidirectional.
+    \item \textbf{Fedus et al. (2018)}\cite{fedus2018maskganbettertextgeneration}: Show that cloze-style masking can improve the robustness of text-generation models by injecting noise during pre-training.
+\end{itemize}
+
+\paragraph{Unsupervised fine-tuning approaches}
+\begin{itemize}
+    \item \textbf{Collobert \& Weston (2008)}\cite{10.1145/1390156.1390177}: Early work pre-training word-embedding parameters on large corpora, demonstrating that fixed embeddings can boost a variety of NLP tasks.
+    \item \textbf{Dai \& Le (2015); Howard \& Ruder (2018)}\cite{NIPS2015_7137debd}: Extend fine-tuning to sentence- and document-level encoders, showing that pre-training on unlabeled text followed by supervised fine-tuning yields strong performance with minimal task-specific parameters.
+    \item \textbf{OpenAI GPT (Radford et al., 2018)}\cite{radford2018improving}: Trains a left-to-right Transformer language model on large text corpora, then fine-tunes it end-to-end for downstream tasks—achieving state-of-the-art results on several sentence-level benchmarks.
+\end{itemize}
+
+
+\subsection*{Novelty}
+% - Understand and articulate what is novel about the author's approach, and what about it is particularly promising.
+
+BERT overcomes the unidirectionality constraint of prior pre-trained models by introducing a simple masking strategy and a sentence-ordering task that allow every Transformer layer to condition on both left and right context. Whereas models like GPT are strictly left-to-right and ELMo concatenates separate directional LMs only at the top of the architectural stack, BERT's \textit{Masked Language Model} (MLM) and \textit{Next Sentence Prediction} (NSP) objectives jointly pre-train a deep bidirectional encoder without architectural modifications.
+
+During pre-training, BERT randomly masks 15\% of tokens and trains the Transformer to predict the original tokens from their full context, while simultaneously classifying whether one sentence follows another. Because the same Transformer encoder is used in both pre-training and fine-tuning, downstream tasks require only a small task-specific output layer, and all parameters can be fine-tuned end-to-end with minimal model architecture engineering.
+
+\subsubsection*{Deep Bidirectional Pre-training via Masked Language Modeling}
+
+BERT's primary innovation is its MLM objective, which randomly replaces 15\% of input tokens with a special \texttt{[MASK]} token (80\% of the time), a random token (10\%), or leaves them unchanged (10\%), then predicts the original tokens via cross-entropy loss. By masking tokens rather than shifting a unidirectional window, every layer combines left and right context, enabling truly bidirectional representations that improve both token and sentence-level tasks.
+
+\subsubsection*{Next Sentence Prediction for Text-Pair Representations}
+
+To capture inter-sentence coherence, BERT adds an NSP task built on a special input format. Each example is constructed as:
+\[
+    [\texttt{CLS}] \;\;\text{Sentence A}\;\; [\texttt{SEP}]\;\;\text{Sentence B}\;\; [\texttt{SEP}]
+\]
+where \texttt{[CLS]} is a special classification token added at the front of every input example and \texttt{[SEP]} tokens mark the boundary between segments. The final hidden state corresponding to \texttt{[CLS]}, often denoted \(\mathbf{C}\), serves as an ``aggregate'' representation of the entire sequence. A binary classifier on \(\mathbf{C}\) is trained to predict whether Sentence B actually follows Sentence A (labelled \texttt{IsNext}) or is a random sentence (labelled \texttt{NotNext}). This pre-training objective directly conditions the model to understand sentence-pair relationships, improving performance on tasks like \textit{Question Answering} and \textit{Natural Language Inference}.
+
+
+\subsubsection*{Unified Fine-Tuning Paradigm Reducing Task-Specific Engineering}
+
+Unlike feature-based methods that require separate architectures per task, BERT demonstrates that fine-tuning a single pre-trained model with just one added output layer suffices to achieve strong results across a wide variety of tasks—from classification to span selection—dramatically reducing the need for heavily engineered, task-specific models.
+
+
+\section*{Considerations}
+% - Understand and articulate the risks and/or weaknesses of the author's approach.
+% - Understand and articulate the key benefits and/or strengths of the author's approach
+\subsection*{Strengths}
+
+\begin{itemize}
+    \item \textbf{Truly bidirectional context}: By masking tokens rather than using a unidirectional window, BERT learns from both left and right context at every layer.
+    \item \textbf{Unified pre-training objectives}: Combines \textit{Masked Language Modeling} and \textit{Next Sentence Prediction} in a single model, boosting both token and sentence-level understanding.
+    \item \textbf{Minimal task-specific engineering}: Supports a wide range of downstream tasks with only one added output layer and end-to-end fine-tuning.
+    \item \textbf{Flexibility across tasks}: Effective for classification, tagging, span selection, and sentence-pair tasks without architecture changes.
+\end{itemize}
+
+\subsection*{Weaknesses}
+
+\begin{itemize}
+    \item \textbf{Mask-fine-tune discrepancy}: The special \texttt{[MASK]} token used during pre-training never appears at fine-tuning time, creating a representational mismatch that must be mitigated via random and same-token replacement strategies.
+    \item \textbf{Simplistic sentence-pair objective}: Next Sentence Prediction is a binary, randomly sampled task that may not fully capture nuanced discourse or complex inter-sentence relationships.
+    \item \textbf{No free-text generation}: As an encoder-only, bidirectional model, BERT cannot perform autoregressive next-token generation or summarization without significant architectural changes.
+    \item \textbf{Homogenous training corpus}: Pre-trained solely on BooksCorpus and Wikipedia, BERT's representations might degrade on out-of-scope corpora-specific tasks.
+    \item \textbf{Fine-tuning sensitivity}: Although fine-tuning is relatively fast, small datasets are highly sensitive to hyperparameter choices—necessitating extensive tuning to reach peak performance.
+\end{itemize}
+
+\section*{Measures of Success}
+% - Understand and articulate the measures of success the authors used to validate their findings.
+\begin{itemize}
+    \item \textbf{GLUE}\footnote{The GLUE benchmark (General Language Understanding Evaluation) is a collection of diverse natural language understanding tasks designed to evaluate and compare the performance of language models across broad NLU capabilities.}: BERT\textsubscript{BASE} achieves an average score of 79.6 and BERT\textsubscript{LARGE} 82.1 on the  benchmark—surpassing previous state of the art by 4.5 \% and 7.0 \% respectively.
+    \item \textbf{SQuAD}\footnote{The SQuAD benchmark is a reading-comprehension dataset of crowd-sourced question-answer pairs on Wikipedia passages, where models must predict the exact answer span in the text.}: On the SQuAD v1.1 reading-comprehension tasks, BERT\textsubscript{LARGE} attains 90.9 F1 on dev, beating the next best by +1.3 F1; even greater improvements were seen on enhanced models (e.g., BERT\textsubscript{LARGE} ensemble). For SQuAD v2.0, BERT\textsubscript{LARGE} achieves 83.1, a +5.1 F1 improvement over the previous best.
+\end{itemize}
+
+
+
+\section*{Impact}
+% - Understand and articulate the impact of the innovations described in the paper.
+Since its introduction, BERT has served as the foundation for a vibrant ecosystem of improved pre-trained language models. RoBERTa\cite{DBLP:journals/corr/abs-1907-11692} showed that tuning hyperparameters, removing Next Sentence Prediction, and training on more data can yield further gains. ALBERT\cite{lan2020albertlitebertselfsupervised} introduced parameter-sharing and factorized embeddings to reduce memory usage and accelerate training while maintaining or improving accuracy. DistilBERT\cite{sanh2020distilbertdistilledversionbert} applied knowledge distillation to compress BERT into a smaller, faster model retaining most of its performance. Subsequent innovations like ELECTRA\cite{clark2020electrapretrainingtextencoders} replaced masked language modeling with a more sample-efficient replaced token detection objective, inspiring research into alternative pre-training tasks. Collectively, these works underscore BERT's pivotal role in shaping modern approaches to contextual language representation.
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
