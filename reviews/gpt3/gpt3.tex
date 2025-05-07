@@ -1,0 +1,160 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{positioning,matrix,decorations.pathreplacing}
+\geometry{a4paper, margin=1in}
+
+\title{
+    Review of \textit{Language Models are Few-Shot Learners}. (2020) \\
+    \small{OpenAI GPT-3}
+}
+\author{Matthew Evans}
+\date{April 30, 2025}
+
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+% - Understand the problem or issue that the authors' work addresses and what they aimed to achieve, and be able to articulate the problem or issue using absolutely no technical jargon.
+Conventional language models typically require extensive task-specific training to achieve satisfactory performance, thereby limiting their adaptability. Building on their prior GPT-2\cite{radford2019language} work, the authors\cite{NEURIPS2020_1457c0d6} investigated whether simply increasing model scale could confer broad task proficiency with minimal or no additional training, leveraging only a handful of examples or natural language instructions at inference.
+
+\section*{Approach}
+\subsection*{Prior Work}
+% - Understand and articulate how things were done prior to the innovation described in the paper.
+The most relevant predecessors to GPT-3 include GPT-2, which introduced large-scale autoregressive language modeling with zero-shot capabilities, and BERT\cite{DBLP:journals/corr/abs-1810-04805}, which popularized fine-tuning of large pretrained transformers on downstream tasks. The paper also builds on work exploring scaling laws for neural networks\cite{DBLP:journals/corr/abs-2001-08361}, and earlier efforts in meta-learning and in-context learning like GPT and GPT-2, as well as unsupervised multitask learning exemplified by models like T5\cite{DBLP:journals/corr/abs-1910-10683} and XLNet\cite{DBLP:journals/corr/abs-1906-08237}. These works laid the foundation for GPT-3's focus on scaling and task-agnostic inference via natural language prompts.
+
+\subsection*{Novelty}
+% - Understand and articulate what is novel about the author's approach, and what about it is particularly promising.
+GPT-3 was introduced as a 175 billion-parameter autoregressive language model—over ten times larger than its predecessors—demonstrating substantial performance gains across a wide range of NLP tasks. By leveraging this scale, the authors showed that a single model can perform zero-shot, one-shot, and few-shot learning using only natural language prompts, eliminating the need for task-specific fine-tuning.
+
+Empirical results confirmed predictable improvements in model performance as size increased, validating practical scaling laws. Without any gradient updates, GPT-3 achieved state-of-the-art or near-state-of-the-art results on benchmarks such as LAMBADA and TriviaQA using in-context learning alone (i.e., no fine-tuning).
+
+A thorough analysis of model behavior highlighted both its broad generalization capabilities and its limitations. While GPT-3 excels at many tasks, it struggles with symbolic reasoning and is sensitive to prompt phrasing. These observations informed a balanced evaluation of its practical strengths and weaknesses.
+
+Finally, the authors addressed broader impacts, including ethical considerations around bias, misinformation, and the environmental cost of large-scale training. They framed GPT-3 as a powerful yet double-edged advancement in AI, underscoring the need for responsible deployment and further research.
+
+\section*{Considerations}
+% - Understand and articulate the risks and/or weaknesses of the author's approach.
+% - Understand and articulate the key benefits and/or strengths of the author's approach
+\subsection*{Strengths}
+\begin{itemize}
+    \item Achieves state-of-the-art results across NLP benchmarks without task-specific fine-tuning.
+    \item Leverages 175 billion parameters for in-context meta-learning in zero-, one-, and few-shot settings.
+    \item Demonstrates consistent performance gains with increasing model scale.
+\end{itemize}
+\subsection*{Weaknesses}
+\begin{itemize}
+    \item The 175 B parameter scale and extensive pretraining demand prohibitively high compute resources, limiting accessibility and rendering retraining (e.g., to correct invalid data) infeasible.
+    \item Such compute intensity incurs significant energy consumption, raising environmental and infrastructure concerns.
+    \item Performance is highly sensitive to prompt design, necessitating manual in-distribution prompt tuning to achieve optimal results.
+    \item The model exhibits weaknesses in symbolic and multi-step reasoning, as demonstrated by arithmetic and word-manipulation benchmarks.
+\end{itemize}
+
+\section*{Measures of Success}
+% - Understand and articulate the measures of success the authors used to validate their findings.
+The authors systematically present GPT-3’s performance across diverse NLP benchmarks. Despite no task-specific fine-tuning, GPT-3 achieves or approaches state-of-the-art results on numerous tasks. A summary of these evaluations follows.
+
+\subsection*{Language Modeling}
+Language modeling tasks evaluate a model's ability to predict the next word in a sequence, reflecting its grasp of syntax, semantics, and context.
+
+\paragraph{Strengths}
+GPT-3 (175B) achieves SOTA in the zero-shot setting on PTB\footnote{The Penn Treebank (PTB) is a dataset of syntactically annotated text used to benchmark language modeling performance.} (20.5 perplexity) and surpasses prior SOTA on LAMBADA\footnote{The LAMBADA (LAnguage Modeling Broadened to Account for Discourse Aspects) benchmark tests a model's ability to predict the final word of a passage requiring broad context understanding.} in few-shot (86.4\%), demonstrating strong contextual prediction and effective in-context learning.
+
+\paragraph{Weaknesses}
+Few-shot performance on HellaSwag\footnote{HellaSwag is an adversarially constructed dataset requiring models to choose the most plausible continuation of a short story or instruction.} (79.3\%) and StoryCloze\footnote{The StoryCloze Test challenges models to select the correct ending to a four-sentence story from two options, evaluating narrative understanding.} (87.7\%) remains below fine-tuned SOTA, indicating limitations in fully matching specialized models on structured commonsense tasks.
+
+
+\subsection*{Closed Book Question Answering}
+Closed book QA tasks assess a model's ability to answer factual questions from internal knowledge without external context or retrieval.
+
+\paragraph{Strengths}
+GPT-3 (175B) surpasses SOTA on TriviaQA\footnote{TriviaQA is a question answering dataset consisting of trivia-style factoid questions with answers grounded in evidence documents.} in the few-shot setting (71.2\%), showing strong internalization of factual content and effective in-context adaptation.
+
+\paragraph{Weaknesses}
+Fails to match SOTA on Natural Questions\footnote{Natural Questions (NQ) is a large-scale dataset from Google with real user questions and corresponding answers found in Wikipedia articles.} and WebQuestions\footnote{WebQuestions is a dataset of natural language questions sourced from web search queries, paired with answers derived from Freebase.}; few-shot performance (29.9\%, 41.5\%) suggests limits in fine-grained recall and domain adaptation.
+
+
+\subsection*{Translation}
+Translation tasks evaluate a model's ability to convert text between languages while preserving meaning, grammar, and fluency.
+
+\paragraph{Strengths}
+GPT-3 (175B) in the few-shot setting outperforms prior unsupervised (Neural Machine Translation) methods and approaches supervised SOTA on several X$\rightarrow$En tasks (e.g., Ro$\rightarrow$En: 39.5 BLEU\footnote{The Bilingual Evaluation Understudy (BLEU) score measures the quality of machine-translated text by comparing it to one or more reference translations.}).
+
+\paragraph{Weaknesses}
+Performance on En$\rightarrow$X directions, especially En$\rightarrow$Ro (21.0 BLEU), remains far below supervised SOTA, reflecting training data imbalance and tokenizer bias toward English.
+
+
+\subsection*{Winograd-Style Tasks}
+Winograd-style tasks test a model's ability to resolve pronoun references using contextual and commonsense reasoning.
+
+\paragraph{Strengths}
+GPT-3 (175B) achieves near-SOTA on WSC273\footnote{WSC273 is the 273-example version of the Winograd Schema Challenge, designed to test pronoun resolution requiring commonsense reasoning.} even in the zero-shot setting (88.3\%), with a slight peak in one-shot (89.7\%), demonstrating strong pretrained coreference capabilities.
+
+\paragraph{Weaknesses}
+Few-shot performance on the adversarial Winogrande task (77.7\%) falls short of SOTA (84.6\%), indicating limited robustness to more challenging or out-of-distribution examples.
+
+
+\subsection*{Common Sense Reasoning}
+Common sense reasoning tasks evaluate a model's ability to apply everyday physical and causal knowledge to answer questions or select plausible outcomes.
+
+\paragraph{Strengths}
+GPT-3 (175B) achieves SOTA on PIQA\footnote{The Physical Interaction Question Answering (PIQA) benchmark evaluates a model's ability to reason about everyday physical situations.} in all settings (e.g., 82.8\% few-shot), outperforming fine-tuned baselines, and shows consistent scaling and few-shot gains on OpenBookQA\footnote{OpenBookQA is a multiple-choice question answering dataset requiring models to combine science facts with broad commonsense knowledge.}.
+
+\paragraph{Weaknesses}
+Fails to match SOTA on ARC-Challenge (51.5\%) and OpenBookQA (65.4\%), with shallow improvements in few-shot settings and persistent gaps in multi-hop or science-based reasoning.
+
+
+\subsection*{Reading Comprehension}
+Reading comprehension tasks assess a model's ability to extract or infer answers from passages of text, often requiring span selection or generative responses.
+
+\paragraph{Strengths}
+GPT-3 (175B) performs competitively on CoQA\footnote{The Conversational Question Answering (CoQA) dataset involves multi-turn QA where each question depends on previous context.} in the few-shot setting (85.0 F1), approaching human-level and fine-tuned SOTA, and shows strong gains from zero- to few-shot on SQuADv2.
+
+\paragraph{Weaknesses}
+Few-shot performance on DROP\footnote{The Discrete Reasoning Over Paragraphs (DROP) benchmark tests a model's ability to perform arithmetic and reasoning over paragraphs.} (36.5 F1), QuAC\footnote{The Question Answering in Context (QuAC) dataset contains information-seeking dialogues where the model must answer questions based on context.} (44.3 F1), and RACE\footnote{The Reading Comprehension from Examinations (RACE) dataset consists of English exam questions for middle and high school students.} (\(<\) 60\% accuracy) remains far below SOTA, indicating limited capacity for discrete reasoning, dialog structure, and multi-step inference.
+
+
+\subsection*{SuperGLUE}
+SuperGLUE is a benchmark suite of challenging NLP tasks designed to test a model's reasoning, inference, and understanding across multiple formats.
+
+\paragraph{Strengths}
+GPT-3 (175B) in the few-shot setting matches or exceeds fine-tuned BERT-Large on four out of eight tasks, and approaches SOTA on COPA\footnote{The Choice of Plausible Alternatives (COPA) task requires selecting the more plausible cause or effect of a given premise.} and ReCoRD\footnote{The Reading Comprehension with Commonsense Reasoning Dataset (ReCoRD) evaluates a model's ability to fill in masked entities in passages based on commonsense inference.}, demonstrating effective broad generalization.
+
+\paragraph{Weaknesses}
+Few-shot performance is weak on WiC\footnote{The Word-in-Context (WiC) task asks whether a target word has the same meaning in two different sentence contexts.} (49.4\%) and MultiRC\footnote{The Multi-Sentence Reading Comprehension (MultiRC) dataset is a QA benchmark where each question can have multiple correct answers, requiring justification from multiple sentences.} (30.5\% accuracy), with consistent underperformance on sentence-pair tasks requiring fine-grained semantic comparison.
+
+
+\subsection*{NLI}
+Natural Language Inference (NLI) tasks require a model to determine whether a hypothesis logically follows from, contradicts, or is neutral with respect to a premise.
+
+\paragraph{Strengths}
+GPT-3 (175B) shows modest gains on RTE\footnote{The Recognizing Textual Entailment (RTE) dataset tests whether a hypothesis can be inferred from a given premise.} in the few-shot setting, approaching the performance of a fine-tuned BERT-Large baseline.
+
+\paragraph{Weaknesses}
+Few-shot performance on the adversarial ANLI\footnote{The Adversarial Natural Language Inference (ANLI) benchmark is a series of increasingly difficult NLI tasks constructed to challenge language models' inference capabilities.} benchmark remains well below SOTA, with smaller models performing near random, indicating limited robustness to difficult inference cases.
+
+
+\subsection*{Synthetic and Qualitative Tasks}
+These tasks probe GPT-3's ability to perform on-the-fly reasoning, pattern recognition, and generative tasks not directly seen during training.
+
+\paragraph{Strengths}
+GPT-3 (175B) demonstrates strong few-shot performance on arithmetic, word manipulation, analogy solving, and naturalistic text generation, often producing human-like outputs without fine-tuning.
+
+\paragraph{Weaknesses}
+Fails on more complex or compositional tasks (e.g., 5-digit multiplication), with performance sharply degrading as problem complexity increases, revealing limits in systematic generalization and symbolic reasoning.
+
+
+\section*{Impact}
+% - Understand and articulate the impact of the innovations described in the paper.
+The GPT-3 paper had a profound impact on future work by demonstrating that large-scale language models can perform a wide variety of tasks using only natural language prompts, eliminating the need for task-specific fine-tuning in many cases. It established few-shot, one-shot, and zero-shot learning as viable paradigms for evaluating language models and shifted the research focus toward scaling laws, in-context learning, and prompt engineering. GPT-3's success inspired the development of even larger and more capable models, accelerated the deployment of foundation models across domains, and raised important questions about data contamination, evaluation practices, and ethical considerations in large-scale AI.
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
