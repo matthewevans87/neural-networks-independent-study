@@ -1,0 +1,100 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{positioning,matrix,decorations.pathreplacing}
+\geometry{a4paper, margin=1in}
+
+\title{
+    Review of \\
+    \textit{An Image Is Worth 16x16 Words:\\Transformers For Image Recognition At Scale}
+}
+\author{Matthew Evans}
+\date{May 7, 2025}
+
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+% - Understand the problem or issue that the authors' work addresses and what they aimed to achieve, and be able to articulate the problem or issue using absolutely no technical jargon.
+In this paper\cite{DBLP:journals/corr/abs-2010-11929}, the authors explores how a Transformer model, traditionally used for text, can be repurposed for image recognition by dividing images into fixed-size patches treated as tokens. Unlike convolutional neural networks that embed spatial bias by design, the Vision Transformer must learn spatial layout and semantic relationships from data alone. Through large-scale pre-training and increased model capacity, the authors show that a pure Transformer can achieve performance on par with or exceeding state-of-the-art CNNs with minimal architectural changes.
+
+
+\section*{Approach}
+\subsection*{Prior Work}
+% - Understand and articulate how things were done prior to the innovation described in the paper.
+
+\paragraph{Transformer Model \cite{DBLP:journals/corr/VaswaniSPUJGKP17}} Introduced the Transformer model for machine translation based on multi-head self-attention and position-wise feed-forward layers, establishing the large-scale pre-training and fine-tuning paradigm later popularized by BERT\cite{DBLP:journals/corr/abs-1810-04805} and GPT\cite{radford2019language, NEURIPS2020_1457c0d6}.
+
+\paragraph{Local Self-Attention \cite{DBLP:journals/corr/abs-1802-05751, DBLP:journals/corr/abs-1904-11491, DBLP:journals/corr/abs-1906-05909, DBLP:journals/corr/abs-2004-13621}} Restricts self-attention to local neighborhoods and demonstrates that local multi-head attention blocks can completely replace convolutional layers in vision models.
+
+\paragraph{Sparse Transformers \cite{DBLP:journals/corr/abs-1904-10509}} Employ scalable approximations to full self-attention—such as block-wise or strided patterns—to make global attention tractable on high-resolution images.
+
+\paragraph{Block \& Axial Attention \cite{DBLP:journals/corr/abs-1906-02634, DBLP:journals/corr/abs-1912-12180, DBLP:journals/corr/abs-2003-07853}} Explores applying self-attention along fixed blocks or individual tensor axes, reducing the quadratic cost of attention over flattened image patches.
+
+\paragraph{Self-Attention \& Convolution \cite{DBLP:journals/corr/abs-1911-03584}} Extract small \(2\times2\) pixel patches and apply full self-attention, showing that a patch-based Transformer can match convolutional approaches on low-resolution images.
+
+\paragraph{CNN-Attention Hybrids \cite{DBLP:journals/corr/abs-1904-09925, DBLP:journals/corr/abs-2005-12872, Wang_2018_CVPR, DBLP:journals/corr/abs-1904-01766, DBLP:journals/corr/abs-2006-03677}} Augment or post-process convolutional feature maps with self-attention for tasks such as classification, object detection, and video understanding.
+
+\paragraph{iGPT \cite{10.5555/3524938.3525096}} Apply a pure Transformer as an unsupervised generative model on reduced-resolution image pixels.
+
+
+\subsection*{Novelty}
+% - Understand and articulate what is novel about the author's approach, and what about it is particularly promising.
+The authors' key innovation is demonstrating that a \emph{pure Transformer}, with only patch-based tokenization, a learnable classification token, and standard positional embeddings, suffices for state-of-the-art image recognition when pre-trained at scale, without the hand-crafted spatial biases of CNNs. By treating $16\times16$ or $32\times32$ image patches as tokens and reusing off-the-shelf Transformer encoders originally designed for text, they show that ``\emph{large scale training trumps inductive bias}'': large pre-training datasets (ImageNet-21k, JFT-300M) enable ViT to match or exceed CNN-based models with less compute.
+
+Each input image $x\in\mathbb{R}^{H\times W\times C}$ (height, width, color channels) is reshaped into $N = \tfrac{H W}{P^2}$ non-overlapping patches of size $P\times P$, flattened to vectors of dimension $P^2C$, and projected to a $D$-dimensional embedding. As in the NLP case, a learnable [\texttt{class}] token is prepended, and simple 1D positional embeddings are added (the authors note that 2D positional embeddings prove unnecessary). The resulting sequence is fed through $L$ standard Transformer encoder layers (multi-head self-attention + MLP with GELU), and the final [\texttt{class}] output is linearly decoded for classification.
+
+\subsubsection*{Patch-based Image Tokenization}
+By slicing images into fixed-size patches, ViT converts spatial data into a sequence suitable for Transformers. Larger patches (e.g., $16\times16$) reduce sequence length, balancing resolution and computation.
+
+\subsubsection*{Minimal Vision-specific Inductive Bias}
+Unlike CNNs that intrinsically provide locality and translation equivariance at every layer, ViT's only bias is at the patch-extraction stage; all higher-order spatial relations are learned purely through attention.
+
+\subsubsection*{Large-scale Pre-training}
+Pre-training on vast image corpora compensates for the lack of convolutional priors. ViT models pre-trained on JFT-300M achieve up to 88.55\% ImageNet accuracy, outperforming comparably sized ResNets with substantially less pre-training compute.
+
+
+
+\section*{Considerations}
+% - Understand and articulate the risks and/or weaknesses of the author's approach.
+% - Understand and articulate the key benefits and/or strengths of the author's approach
+\subsection*{Strengths}
+
+\begin{itemize}
+    \item \textbf{State-of-the-art accuracy when pre-trained at scale:} ViT models pre-trained on large datasets (JFT-300M, ImageNet-21k) match or exceed top CNNs across ImageNet, CIFAR, and VTAB benchmarks.
+    \item \textbf{Superior compute efficiency:} Vision Transformers use roughly 2-4× less pre-training FLOPs than comparably performing ResNets to reach the same downstream accuracies.
+    \item \textbf{High memory-efficiency:} ViT can fit larger per-core batch sizes than ResNets at the same input resolution, aiding large-scale training.
+    \item \textbf{Global receptive field from day one:} Self-attention layers integrate information across the entire image even in early layers, enabling direct modeling of long-range dependencies.
+\end{itemize}
+\subsection*{Weaknesses}
+\begin{itemize}
+
+    \item \textbf{Data-hungry and sample-inefficient on small datasets:} ViT overfits more than ResNets when trained on mid-sized subsets (e.g. 9M-30M), reinforcing that convolutional biases aid generalization under data scarcity.
+    \item \textbf{Overfitting on limited data:} ViT overfits more than ResNets when trained on mid-sized subsets (e.g. 9M-30M), reinforcing that convolutional biases aid generalization under data scarcity.
+    \item \textbf{Quadratic cost with image size:} Self-attention's bi-quadratic compute scaling in sequence length (i.e., number of patches) can become a bottleneck at very high resolutions.
+    \item \textbf{High absolute pre-training cost for flagship models:} The largest ViT-H/14 variant requires thousands of TPU-core-days (e.g. ~2.5k core-days for ViT-L/16) to pre-train, posing resource challenges.
+\end{itemize}
+
+\section*{Measures of Success}
+% - Understand and articulate the measures of success the authors used to validate their findings.
+
+The authors assess quantitative success using standard classification metrics on downstream tasks. After fine-tuning, their largest ViT model pre-trained on JFT-300M achieves up to 88.55 \% Top-1 accuracy on ImageNet, 90.72 \% on ImageNet-Real, 94.55 \% on CIFAR-100, and an average of 77.63 \% across the 19-task VTAB suite. In few-shot linear evaluation—where representations remain frozen and only a linear classifier is trained, ViT surpasses comparably sized ResNets as pre-training data increases. Scaling studies further demonstrate that ViT reaches equivalent or better accuracies than ResNets with 2-4\(\times\) fewer pre-training FLOPs.
+
+The authors also present qualitative analyses of model behavior. By measuring \textit{attention distance}, they show that some heads attend globally from the first layer while others focus locally, with average attention span expanding with depth, mirroring receptive field growth in CNNs. Attention rollout visualizations reveal that the \texttt{[class]} token predominantly attends to semantically meaningful regions (e.g., object parts), illustrating learned spatial and semantic grouping behaviors.
+
+
+\section*{Impact}
+% - Understand and articulate the impact of the innovations described in the paper.
+Evidence of the Vision Transformer's influence emerged quickly. Touvron et al.\ introduced the \emph{Data-Efficient Image Transformer (DeiT)}\cite{DBLP:journals/corr/abs-2012-12877}, which incorporates a distillation token and teacher-student attention strategy to achieve 83.1\% Top-1 accuracy on ImageNet-1K when trained from scratch on ImageNet in under three days on a single 8-GPU node. Liu et al.\ followed with the \emph{Swin Transformer}\cite{DBLP:journals/corr/abs-2103-14030}, a hierarchical model using shifted non-overlapping windows to encode locality and multi-scale features, achieving 87.3\% Top-1 accuracy on ImageNet-1K and demonstrating strong performance on detection and segmentation tasks. These works spurred a wave of subsequent architectures—including PVT\cite{DBLP:journals/corr/abs-2102-12122}, Twins\cite{DBLP:journals/corr/abs-2104-13840}, and CSWin\cite{DBLP:journals/corr/abs-2107-00652}—that extend transformer efficiency, locality, and scalability across diverse vision tasks.
+
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
