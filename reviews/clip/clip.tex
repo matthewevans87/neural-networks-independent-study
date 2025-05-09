@@ -1,0 +1,123 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{positioning,matrix,decorations.pathreplacing}
+\geometry{a4paper, margin=1in}
+
+\title{
+    Review of \textit{Learning Transferable Visual Models From Natural Language Supervision}\\
+    \small{CLIP}
+}
+\author{Matthew Evans}
+\date{May 8 , 2025}
+
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+% - Understand the problem or issue that the authors' work addresses and what they aimed to achieve, and be able to articulate the problem or issue using absolutely no technical jargon.
+The Contrastive Language-Image Pre-Training (CLIP)\cite{DBLP:journals/corr/abs-2103-00020} model addresses the need for flexible image classification without task-specific labeled data by learning from the vast collection of (image, caption) pairs available online. By jointly training image and text encoders to align their representations, CLIP enables zero-shot recognition of novel categories simply specified in natural language. This design removes the requirement for retraining on each new task, greatly reducing both the annotation burden and deployment time.
+
+
+\section*{Approach}
+\subsection*{Prior Work}
+% - Understand and articulate how things were done prior to the innovation described in the paper.
+CLIP builds on a rich history of using natural language to guide visual learning and on joint image–text embedding methods. Key prior developments include:
+
+\begin{itemize}
+    \item \textbf{Distributional Semantics \& Language Models.} Early work in NLP established that word co-occurrence statistics (e.g., word2vec\cite{word2vec}) capture meaningful semantics, laying the groundwork for using language representations as supervision for other domains.
+    \item \textbf{Image–Text Retrieval \& Joint Embeddings.} From Mori et al. (1999)\cite{Mori1999ImagetowordTB} through kernel Canonical Correlation Analysis (CCA)\cite{10.1007/s10994-010-5198-3} and ranking losses\cite{10.1109/CVPR.2010.5540112}, researchers learned to align image and text modalities in a shared space to enable caption retrieval and cross-modal search.
+    \item \textbf{Natural Language Supervision for Vision.} Methods like Ramanathan et al. (2013)\cite{10.1109/ICCV.2013.117} and He \& Peng (2017)\cite{DBLP:journals/corr/HeP17} showed that free-form image captions and descriptions can improve tasks such as video event recognition and fine-grained classification without requiring curated class labels.
+    \item \textbf{Webly Supervised \& Large-Scale Datasets.} Webly supervised approaches \cite{1544937,Divvala2014LearningEA} used noisy image–query pairs from search engines to train classifiers, while recent automatically constructed caption datasets (e.g., Conceptual Captions) demonstrated the value of scaling to millions of examples.
+    \item \textbf{Contrastive \& Self-Supervised Vision.} Advances in contrastive learning (InfoNCE\cite{DBLP:journals/corr/abs-1807-03748}, MoCo\cite{DBLP:journals/corr/abs-1911-05722}, SimCLR\cite{DBLP:journals/corr/abs-2002-05709}) revealed how pulling together augmented views of the same image can yield powerful representations, a principle that CLIP extends to the multi-modal setting.
+\end{itemize}
+
+
+\subsection*{Novelty}
+% - Understand and articulate what is novel about the author's approach, and what about it is particularly promising.
+
+The CLIP approach is novel in its combination of web-scale natural-language supervision with a simple, efficient contrastive learning objective to train joint image–text representations. By harnessing 400 million image–text pairs without manual labeling, CLIP achieves broad zero-shot transfer simply by embedding class names and images into a shared vector space. This stands in contrast to prior methods that relied on fixed label sets, small curated datasets, or complex generative losses, making CLIP both scalable and flexible for new tasks.
+
+\subsubsection*{Web-Scale Natural-Language Supervision}
+CLIP leverages the raw captions and surrounding text of 400 million images sourced from the internet, rather than hand-annotated labels. This massive, diverse corpus captures a vast variety of visual concepts and contexts, enabling the model to generalize across domains without task-specific retraining.
+
+\subsubsection*{Contrastive Multimodal Pre-Training}
+Rather than predicting discrete tokens, CLIP uses an InfoNCE-style loss to align image and text embeddings:
+\[
+    \mathcal{L}_i = -\log \frac{\exp(s_{i,i^+}/\tau)}{\sum_{k=1}^N \exp(s_{i,k}/\tau)},
+    \quad
+    s_{i,j} = \frac{f(x_i)\cdot g(t_j)}{\|f(x_i)\|\|g(t_j)\|}.
+\]
+Here \(f\) and \(g\) are the image and text encoders, and cosine similarity \(s_{i,j}\) drives matching pairs together and mismatches apart within each batch.
+
+\subsubsection*{Prompt-Based Zero-Shot Classification}
+At inference, CLIP treats class names or natural-language descriptions as “prompts,” embedding them via the text encoder and comparing to image embeddings. This nearest-neighbor softmax over cosine similarities creates a zero-shot classifier that requires no additional gradient updates or task-specific head.
+
+\subsubsection*{Compound Model Scaling \& Architecture}
+CLIP experiments with both ResNet- and Vision Transformer–based image encoders, applying compound scaling (width, depth, resolution) and attention pooling to improve capacity. The text encoder is a 12-layer Transformer over BPE tokens, scaled in width to match visual model compute, ensuring balanced multi-modal representation power.
+
+\subsubsection*{Efficient Large-Batch Training}
+Utilizing huge minibatches (32,768 pairs), mixed-precision, gradient checkpointing, and a learnable temperature \(\tau\), CLIP achieves rapid convergence despite its scale. This efficient setup makes training on billions of computed similarities tractable, unlocking high zero-shot performance without impractical compute overhead.
+
+
+\section*{Considerations}
+% - Understand and articulate the risks and/or weaknesses of the author's approach.
+% - Understand and articulate the key benefits and/or strengths of the author's approach
+\subsection*{Strengths}
+\begin{itemize}
+    \item \textbf{Broad Zero-Shot Transfer.} CLIP matches or exceeds supervised baselines on 16 out of 27 diverse benchmarks without any task-specific training examples, including fine-grained (STL-10) and action recognition (UCF101) datasets.
+    \item \textbf{Robustness to Natural Distribution Shift.} In out-of-distribution tests like ImageNetV2 and ObjectNet, CLIP closes up to 75\% of the accuracy gap between in- and out-of-distribution performance compared to ImageNet-trained models.
+    \item \textbf{Scalable Contrastive Pre-Training.} By aligning image and text embeddings via a simple InfoNCE loss over 400 M pairs, CLIP converges 4× faster than generative captioning objectives and leverages raw web text at scale.
+    \item \textbf{Prompt-Based Flexibility.} Users can define new classification tasks at inference with natural-language prompts alone, avoiding any model fine-tuning and greatly reducing deployment time and annotation burden.
+    \item \textbf{Balanced Model Scaling.} Compound scaling of ResNets (width, depth, resolution) and proportional width scaling of the text Transformer deliver consistent model capacity increases across both modalities, enabling the model to leverage web-scale data.
+\end{itemize}
+
+\subsection*{Weaknesses}
+\begin{itemize}
+    \item \textbf{High Compute \& Data Requirements.} Training CLIP (32,768-sample batches, mixed precision, checkpointing) on 400 M pairs demands hundreds of GPUs for weeks; extrapolating to state-of-the-art zero-shot performance would require $\sim$1000× more compute, which is currently impractical.
+    \item \textbf{Poor Fine-Grained \& Systematic Reasoning.} CLIP struggles to differentiate closely related subclasses (e.g., car models, flower species) and tasks requiring counting or measurement, often performing near chance.
+    \item \textbf{Brittle Out-of-Distribution Generalization.} Despite robustness to natural shifts, CLIP fails on truly novel domains (e.g., handwritten MNIST), where even basic pixel-based classifiers outperform it.
+    \item \textbf{Limited Expressivity.} Unlike generative caption models, CLIP's classification is constrained to predefined prompts and cannot produce novel descriptions or explanations without additional mechanisms.
+    \item \textbf{Inefficient Few-Shot Adaptation.} Attaching a linear head on frozen features yields minimal improvement from zero to few-shot compared to humans' large gains after one example, highlighting a sample-efficiency gap.
+\end{itemize}
+
+
+\section*{Measures of Success}
+% - Understand and articulate the measures of success the authors used to validate their findings.
+
+CLIP's primary validation rests on its ability to generalize via zero- and few-shot classification across diverse vision benchmarks, briefly summarized below.
+
+\paragraph{Zero-Shot}
+\begin{itemize}
+    \item On ImageNet, CLIP achieves 76.2\% top-1 accuracy without any fine-tuning, matching a supervised ResNet-50 trained on ImageNet.
+    \item Across 27 datasets—including general object recognition (CIFAR-10/100), fine-grained classification (Stanford Cars, Food101), and action recognition (UCF101, Kinetics700)—zero-shot CLIP outperforms a supervised linear probe on ResNet-50 features in 16 tasks, setting new state-of-the-art on STL-10 (99.3\%) and improving UCF101 by +7.7 points.
+\end{itemize}
+
+\paragraph{Few-Shot}
+\begin{itemize}
+    \item By training a simple logistic regression head on frozen CLIP embeddings, CLIP's \emph{k}-shot performance often rivals or exceeds models trained with extensive labeled data.
+    \item Zero-shot accuracy is equivalent to a 16-shot linear probe on the same features, and the median “effective shots” across tasks is only 5.4 examples per class.
+\end{itemize}
+
+\paragraph{Out-of-Distribution}
+\begin{itemize}
+    \item On natural shift benchmarks (ImageNetV2, ObjectNet, ImageNet-Sketch), CLIP closes up to 75\% of the accuracy gap between in-distribution and shifted test sets compared to an ImageNet-trained model.
+    \item Adapting CLIP via a linear ImageNet head improves in-domain accuracy by +9.2\% but reduces out-of-distribution robustness, underscoring the strength of pure zero-shot transfer.
+    \item CLIP performs poorly on truly novel domains—for example, handwritten MNIST, where zero-shot accuracy falls below 60\% and even raw-pixel logistic regression outperforms it.
+    \item Tasks requiring precise enumeration (e.g., counting objects) or novel distance estimates often yield near-random performance, highlighting limits of its purely contrastive training.
+\end{itemize}
+
+\section*{Impact}
+% - Understand and articulate the impact of the innovations described in the paper.
+CLIP's contrastive, multi-modal pre-training paradigm directly inspired large-scale vision–language models such as Google's ALIGN\cite{DBLP:journals/corr/abs-2102-05918}, which scales noisy web text–image pairs to billions and demonstrates similarly strong zero-shot classification. Its joint embedding framework also underpins “CLIP guidance” in text-to-image diffusion models—first seen in OpenAI's GLIDE\cite{DBLP:journals/corr/abs-2112-10741}—where a frozen CLIP model steers generation toward semantically relevant samples. Beyond generation, CLIP's image encoder was adopted (with frozen weights) in DeepMind's Flamingo\cite{alayrac2022flamingovisuallanguagemodel} to provide rich visual features for few-shot multimodal reasoning. Subsequent work such as ALBEF\cite{DBLP:journals/corr/abs-2107-07651} and LiT\cite{DBLP:journals/corr/abs-2111-07991} have refined CLIP's contrastive objective with fine-grained alignment and larger datasets, propelling rapid advances across retrieval, classification, and generative tasks. Overall, CLIP's scalable alignment of vision and language has reshaped the field's approach to zero-shot and few-shot learning.
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
