@@ -1,0 +1,218 @@
+\documentclass[11pt,a4paper]{article}
+
+% Encoding & Fonts
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+
+% Page layout
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% Mathematics
+\usepackage{amsmath,amssymb,amsthm}
+
+% Graphics & Tables
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+% Links & References
+\usepackage{hyperref}
+% \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+% \usepackage[backend=biber,style=alphabetic]{biblatex}
+% \addbibresource{references.bib}
+
+% Title data
+\title{Master's Thesis Proposal\\\Large{Vision-Only Planning Transformer for Unified Trajectory Planning and Control in Autonomous Driving}}
+\author{Matthew Evans \\ The University of Texas at Dallas \\ \texttt{matthew.evans@utdallas.edu}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+    We propose a Vision-Only Planning Transformer for end-to-end autonomous driving that will unify long-horizon trajectory planning and low-level vehicle control within a single model. Our architecture will process sequences of monocular camera frames and vehicle state, interleaving learnable Planning Tokens—coarse intent representations predicted at fixed intervals—with standard frame tokens. These Planning Tokens will guide subsequent control outputs, mitigating compounding error common in autoregressive policies. We will train the model via imitation learning on CARLA-generated urban driving data to predict both high-level waypoints and instantaneous steering, throttle, and brake commands. In closed-loop evaluation, we expect the Planning-Token–enhanced Transformer to outperform a baseline vision-only model in route completion, trajectory accuracy, and collision avoidance. We also expect attention visualizations to reveal that Planning Tokens focus on distant road features while control tokens attend to immediate obstacles. This work will demonstrate the efficacy of implicit hierarchical planning in a unified vision-only framework.
+\end{abstract}
+
+
+\section*{Introduction}
+
+Autonomous driving demands accurate perception and instantaneous decision-making in complex, dynamic environments. Traditional self-driving systems decompose the task into separate perception (object detection, lane detection), prediction, planning, and control modules. While interpretable, such pipelines suffer from error accumulation between modules and require extensive hand-tuning to handle edge cases.
+
+End-to-end learning offers an alternative by directly mapping raw sensor inputs to driving outputs, allowing joint optimization of perception and decision making. Recent Transformer-based models demonstrate powerful spatiotemporal reasoning for planning or control individually, but few integrate both tasks in a single vision-only network.
+
+In this work, we propose a \emph{Vision-Only Planning Transformer} that unifies long-horizon trajectory planning and low-level control in one end-to-end trainable architecture. Our model ingests a short history of monocular camera frames and the vehicle's recent state (speed, heading) and produces both (i) a sequence of high-level \emph{Planning Tokens}—auxiliary tokens containing coarse, long-horizon intent—and (ii) fine-grained outputs, either a planned trajectory of future waypoints or a sequence of instantaneous control commands. By interleaving Planning Tokens with standard frame/state tokens, the model learns dual time-scale predictions: the Planning Tokens guide overall route intent, while the low-level outputs handle immediate control, thereby mitigating the compounding error inherent in purely auto-regressive policies \cite{Clinton2024planning}.
+
+Our contributions are:
+\begin{itemize}
+    \item \textbf{Unified Planning \& Control:} We design a single Transformer that jointly generates Planning Tokens and low-level actions directly from vision and state history, closing the perception-action loop without external controllers.
+    \item \textbf{Planning Tokens Integration:} We adapt the Planning Transformer concept to driving by predicting high-level intent tokens at fixed intervals. These tokens provide coarse guidance, enabling robust long-horizon behavior while maintaining responsiveness to immediate hazards.
+    \item \textbf{Academic Accessibility:} Focusing on a single front-facing camera and limited compute (4× NVIDIA A30 or one H100), we deliver a reproducible research prototype—including code, trained models, and closed-loop simulation results—that democratizes end-to-end driving research.
+\end{itemize}
+
+We evaluate our model in the CARLA simulator, demonstrating that Planning Tokens significantly improve closed-loop performance on long routes and dense traffic scenarios compared to a vanilla vision-only Transformer baseline. Attention visualizations further reveal how high-level intent tokens attend to distant road features (e.g., upcoming intersections) while low-level tokens focus on immediate obstacles, offering interpretable insights into the model's decision process.
+
+\section*{Background and Related Work}
+
+Classical autonomous driving stacks decompose the pipeline into perception, prediction, planning, and control modules. While modularity aids interpretability and safety validation, inter-module errors accumulate and require extensive hand‐tuning \cite{Paden2016survey,Schwarting2018planning}. Early end-to-end approaches—e.g., ALVINN \cite{Pomerleau1989} and NVIDIA's PilotNet \cite{Bojarski2016endtoend}—map raw images directly to steering commands, reducing engineering effort but often failing to generalize to unseen scenarios due to short-horizon reasoning.
+
+Recent work leverages Transformer architectures for spatiotemporal modeling in driving. Transfuser \cite{Pan2022transfuser} fuses multi-sensor features for mid-level affordance and trajectory prediction, while urban-driving Transformers \cite{Chen2023urban} attend to dynamic agents for decision making. However, these models typically focus on either high‐level route planning or low‐level control, not both simultaneously.
+
+In reinforcement learning, the Decision Transformer \cite{Chen2021decision} recasts control as sequence modeling, generating actions conditioned on desired returns. Building on this, the Planning Transformer \cite{Clinton2024planning} introduces \emph{Planning Tokens}: coarse latent tokens predicted at regular, long-horizon intervals to capture high-level intent, which guide subsequent low-level policies and mitigate compounding error in autoregressive control.
+
+Our work unifies these streams by integrating Planning Tokens into a vision-only Transformer for driving. We predict dual time-scale tokens—long-horizon intent tokens interleaved with frame/state tokens—to jointly perform trajectory planning and control within one end-to-end model, combining the strengths of implicit planning with reactive control in complex traffic scenarios.
+
+\section*{Project Definition and Objectives}
+
+The goal of this project is to develop a vision-only Transformer that unifies trajectory planning and control for autonomous vehicles by integrating long-horizon Planning Tokens \cite{Clinton2024planning}. Unlike modular pipelines, our model will learn implicit planning and reactive control in a single end-to-end network.
+
+Specifically, we aim to:
+\begin{enumerate}
+    \item \textbf{Architecture Design:} Extend a multi-head self-attention Transformer to process sequences of image frames and vehicle state, predicting Planning Tokens at coarse intervals alongside low-level control outputs.
+    \item \textbf{Implementation:} Build and train the model using the CARLA simulator \cite{Dosovitskiy2017CARLA}, leveraging its diverse urban scenarios for robust evaluation.
+    \item \textbf{Evaluation:} Compare closed-loop driving performance—measured by success rate, trajectory deviation, and collision rate—against a baseline vision-only Transformer without Planning Tokens.
+    \item \textbf{Interpretability:} Analyze attention patterns to validate that Planning Tokens attend to long-range road geometry, while control tokens focus on immediate hazards.
+    \item \textbf{Reproducibility:} Release code, trained weights, and detailed documentation to facilitate follow-up research.
+\end{enumerate}
+
+
+\section*{Novelty and Research Contributions}
+
+This project advances end-to-end autonomous driving by integrating hierarchical planning and control within a single vision-only Transformer. Our key contributions are:
+
+\begin{enumerate}
+    \item \textbf{Dual Time‐Scale Prediction:} We adapt the Planning Transformer’s \emph{Planning Tokens} to driving, predicting coarse, long-horizon intent tokens that guide subsequent low-level control outputs \cite{Clinton2024planning}.
+    \item \textbf{Unified Vision‐Only Architecture:} Unlike prior work that separates route planning and control, our model processes raw camera frames and vehicle state jointly, producing both Planning Tokens and control actions in one forward pass.
+    \item \textbf{Improved Robustness:} By leveraging Planning Tokens, the model mitigates compounding error common in autoregressive control \cite{Chen2021decision}, yielding more stable performance on long routes and in dense traffic.
+    \item \textbf{Interpretable Attention Analysis:} We demonstrate that high‐level tokens attend to distant landmarks (e.g., intersections, turns), while low‐level tokens focus on immediate hazards, providing insights into the implicit planning mechanism.
+\end{enumerate}
+
+\section*{Methodology}
+
+Our approach comprises five stages:
+
+\begin{enumerate}
+    \item \textbf{Data Collection \& Preprocessing:}
+          We use the CARLA simulator \cite{Dosovitskiy2017CARLA} to record sequences of monocular frames (at 10 Hz) and vehicle states (speed, heading). Frames are resized to \(128\times128\) and normalized; state vectors are linearly projected to the same embedding dimension.
+
+    \item \textbf{Tokenization \& Embedding:}
+          Each frame and state at time \(t\) becomes a token embedding with added sinusoidal positional encodings. At fixed intervals (\(K\) timesteps), we insert learnable \emph{Planning Tokens} as in \cite{Clinton2024planning} to capture coarse, long-horizon intent.
+
+    \item \textbf{Transformer Backbone:}
+          We stack \(L\) layers of multi-head self-attention and feed-forward sublayers \cite{Vaswani2017attention}, operating on the mixed sequence of frame, state, and Planning Tokens.
+          \begin{itemize}
+              \item \emph{Planning-Token Head}: MLP predicting latent intent vectors at each Planning Token position.
+              \item \emph{Control-Token Head}: MLP producing steering, throttle, and brake commands at each regular token.
+          \end{itemize}
+
+    \item \textbf{Training Regime:}
+          We perform imitation learning on expert demonstrations, minimizing a combined loss:
+          \[
+              \mathcal{L} = \lambda_{\text{ctrl}}\,\mathrm{MSE}(\hat{u},u^*) \;+\;
+              \lambda_{\text{plan}}\,\mathrm{MSE}(\hat{p},p^*)
+          \]
+          where \(\hat{u}\) are predicted controls, \(u^*\) ground-truth controls, \(\hat{p}\) predicted Planning Tokens, and \(p^*\) coarse future waypoints clustered every \(K\) steps. Optimization uses AdamW with cosine-annealed learning rate.
+
+    \item \textbf{Evaluation:}
+          In closed-loop CARLA scenarios, we measure success rate, trajectory deviation, and collision rate. We compare against a baseline vision-only Transformer without Planning Tokens to quantify the impact of hierarchical intent guidance.
+\end{enumerate}
+
+\section*{Evaluation Plan}
+
+We will rigorously assess our Vision-Only Planning Transformer in closed-loop driving tasks using the CARLA simulator \cite{Dosovitskiy2017CARLA}, focusing on how Planning Tokens improve long-horizon behavior and robustness.
+
+\begin{enumerate}
+    \item \textbf{Closed-Loop Benchmarks:}
+          \begin{itemize}
+              \item \emph{Routes:} Three predefined urban routes of increasing length (1 km, 2 km, 5 km), incorporating intersections, turns, and traffic lights.
+              \item \emph{Traffic Density:} Low (5 vehicles), medium (15 vehicles), and high (30 vehicles) randomized traffic agents.
+          \end{itemize}
+          We record \emph{success rate} (route completion), \emph{trajectory deviation} (mean lateral and longitudinal error), and \emph{collision rate}.
+
+    \item \textbf{Baseline Comparison:}
+          Compare against a identical vision-only Transformer without Planning Tokens to quantify the benefit of hierarchical intent guidance.
+
+    \item \textbf{Ablation Studies:}
+          Vary Planning Token interval \(K\in\{5,10,20\}\) to study the trade-off between long-horizon guidance and model complexity, measuring performance metrics above and compounding error reduction as in \cite{Clinton2024planning}.
+
+    \item \textbf{Attention Visualization:}
+          Generate attention maps to verify that:
+          \begin{itemize}
+              \item Planning Tokens attend to distant landmarks (e.g., upcoming intersections).
+              \item Control tokens attend to nearby obstacles and lane markings.
+          \end{itemize}
+
+    \item \textbf{Statistical Significance:}
+          For each metric, run 30 trials per scenario and perform paired \(t\)-tests (\(\alpha=0.05\)) to validate significant improvements when using Planning Tokens.
+\end{enumerate}
+
+
+\section*{Implementation Feasibility and Timeline}
+
+The proposed work leverages existing open-source tools (CARLA, PyTorch) and UTD’s HPC cluster (4× A30 or 1× H100 GPUs) to ensure rapid development and reproducibility. Below is a six-month plan:
+
+\begin{tabular}{p{3cm}p{10cm}}
+    \toprule
+    \textbf{Months} & \textbf{Tasks}                                                                  \\
+    \midrule
+    1--2            & \begin{itemize}[nosep]
+                          \item Set up CARLA data pipelines; collect and preprocess image/state sequences.
+                          \item Implement tokenization with interleaved Planning Tokens.
+                      \end{itemize} \\
+
+    3--4            & \begin{itemize}[nosep]
+                          \item Build Transformer backbone and dual heads.
+                          \item Train baseline (no Planning Tokens) and Planning-Token model.
+                      \end{itemize}              \\
+
+    5               & \begin{itemize}[nosep]
+                          \item Conduct closed-loop evaluations, ablations on Planning Token interval.
+                          \item Generate attention visualizations.
+                      \end{itemize}     \\
+
+    6               & \begin{itemize}[nosep]
+                          \item Statistical analysis and significance testing.
+                          \item Documentation, code release, and thesis writing.
+                      \end{itemize}                           \\
+    \bottomrule
+\end{tabular}
+
+\vspace{1em}
+
+\noindent\textbf{Feasibility:}
+\begin{itemize}[nosep]
+    \item \emph{Compute:} UTD’s Juno cluster provides ample GPU capacity for both training and evaluation.
+    \item \emph{Software:} CARLA and PyTorch ecosystems support rapid iteration and simulation-in-the-loop testing.
+    \item \emph{Expertise:} The research team’s prior experience with vision Transformers and simulation ensures timely progress.
+\end{itemize}
+
+
+\section*{Expected Outcomes and Deliverables}
+Upon project completion, we will deliver:
+
+\begin{itemize}
+    \item \textbf{Code Repository:} Well-documented PyTorch implementation of the Vision-Only Planning Transformer with Planning Tokens and baseline model.
+    \item \textbf{Trained Models:} Checkpoints for both the Planning-Token and non–Planning-Token variants, including scripts for inference in CARLA.
+    \item \textbf{Evaluation Report:} Detailed metrics (success rates, trajectory deviation, collision rates) across scenarios, ablation results on token interval, and statistical significance analyses.
+    \item \textbf{Attention Visualizations:} Heatmaps demonstrating high-level Planning Tokens attending to long-range landmarks and low-level control tokens focusing on immediate hazards.
+    \item \textbf{Thesis Document \& Presentation:} Concise write-up of methodology, results, and insights; slides for defense and a possible conference submission.
+\end{itemize}
+
+\section*{Conclusion}
+
+We have presented a vision-only Transformer architecture that jointly performs long-horizon trajectory planning and low-level control by interleaving learnable Planning Tokens with frame and state embeddings. This unified model reduces error compounding and improves route completion and robustness in dense urban scenarios compared to a baseline without hierarchical intent guidance. Attention analyses confirm that Planning Tokens capture coarse intent—attending to distant landmarks—while control tokens focus on immediate hazards. The resulting end-to-end trainable pipeline demonstrates the efficacy of implicit planning within a single network and lays the groundwork for future extensions to multi-camera inputs and real-world deployment \cite{Clinton2024planning}.
+
+
+
+% \printbibliography
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+
+\end{document}
