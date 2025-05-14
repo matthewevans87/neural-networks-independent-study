@@ -5,7 +5,8 @@
   eprint        = {2306.16927},
   archiveprefix = {arXiv},
   primaryclass  = {cs.RO},
-  url           = {https://arxiv.org/abs/2306.16927}
+  url           = {https://arxiv.org/abs/2306.16927},
+  abstract      = {The autonomous driving community has witnessed a rapid growth in approaches that embrace an end-to-end algorithm framework, utilizing raw sensor input to generate vehicle motion plans, instead of concentrating on individual tasks such as detection and motion prediction. End-to-end systems, in comparison to modular pipelines, benefit from joint feature optimization for perception and planning. This field has flourished due to the availability of large-scale datasets, closed-loop evaluation, and the increasing need for autonomous driving algorithms to perform effectively in challenging scenarios. In this survey, we provide a comprehensive analysis of more than 270 papers, covering the motivation, roadmap, methodology, challenges, and future trends in end-to-end autonomous driving. We delve into several critical challenges, including multi-modality, interpretability, causal confusion, robustness, and world models, amongst others. Additionally, we discuss current advancements in foundation models and visual pre-training, as well as how to incorporate these techniques within the end-to-end driving framework.}
 }
 @misc{proposal,
   title = {Vision-Only Transformer for Unified Trajectory Planning and Control in Autonomous Driving},
@@ -13,86 +14,187 @@
   year  = {2024}
 }
 
-@article{Clinton2024planning,
-  author  = {Clinton, Joseph and Lieck, Robert},
-  title   = {Planning Transformer: Long-Horizon Offline Reinforcement Learning with Planning Tokens},
-  journal = {arXiv preprint arXiv:2409.09513},
-  year    = {2024}
+@misc{clinton2024planningtransformerlonghorizonoffline,
+  title         = {Planning Transformer: Long-Horizon Offline Reinforcement Learning with Planning Tokens},
+  author        = {Joseph Clinton and Robert Lieck},
+  year          = {2024},
+  eprint        = {2409.09513},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.LG},
+  url           = {https://arxiv.org/abs/2409.09513},
+  abstract      = {Supervised learning approaches to offline reinforcement learning, particularly those utilizing the Decision Transformer, have shown effectiveness in continuous environments and for sparse rewards. However, they often struggle with long-horizon tasks due to the high compounding error of auto-regressive models. To overcome this limitation, we go beyond next-token prediction and introduce Planning Tokens, which contain high-level, long time-scale information about the agent's future. Predicting dual time-scale tokens at regular intervals enables our model to use these long-horizon Planning Tokens as a form of implicit planning to guide its low-level policy and reduce compounding error. This architectural modification significantly enhances performance on long-horizon tasks, establishing a new state-of-the-art in complex D4RL environments. Additionally, we demonstrate that Planning Tokens improve the interpretability of the model's policy through the interpretable plan visualisations and attention map.}
 }
 
-@article{Paden2016survey,
-  title   = {A Survey of Motion Planning and Control Techniques for Self-Driving Urban Vehicles},
-  author  = {Paden, Crispin and {\v{C}}\'{a}p, Michal and Yong, Yang and Yershov, Dmitry and Frazzoli, Emilio},
-  journal = {IEEE Transactions on Intelligent Vehicles},
-  year    = {2016},
-  volume  = {1},
-  number  = {1},
-  pages   = {33--55},
-  doi     = {10.1109/TIV.2016.2578706}
+@article{DBLP:journals/corr/abs-1812-03079,
+  author     = {Mayank Bansal and
+                Alex Krizhevsky and
+                Abhijit S. Ogale},
+  title      = {ChauffeurNet: Learning to Drive by Imitating the Best and Synthesizing
+                the Worst},
+  journal    = {CoRR},
+  volume     = {abs/1812.03079},
+  year       = {2018},
+  url        = {http://arxiv.org/abs/1812.03079},
+  eprinttype = {arXiv},
+  eprint     = {1812.03079},
+  timestamp  = {Tue, 01 Jan 2019 15:01:25 +0100},
+  biburl     = {https://dblp.org/rec/journals/corr/abs-1812-03079.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org}
 }
 
-@article{Schwarting2018planning,
-  title   = {Planning and Decision-Making for Autonomous Vehicles},
-  author  = {Schwarting, Wilko and Alonso-Mora, Javier and Rus, Daniela},
-  journal = {Annual Review of Control, Robotics, and Autonomous Systems},
-  year    = {2018},
-  volume  = {1},
-  pages   = {187--210},
-  doi     = {10.1146/annurev-control-060117-105157}
+@article{DBLP:journals/corr/PadenCYYF16,
+  author     = {Brian Paden and
+                Michal C{\'{a}}p and
+                Sze Zheng Yong and
+                Dmitry S. Yershov and
+                Emilio Frazzoli},
+  title      = {A Survey of Motion Planning and Control Techniques for Self-driving
+                Urban Vehicles},
+  journal    = {CoRR},
+  volume     = {abs/1604.07446},
+  year       = {2016},
+  url        = {http://arxiv.org/abs/1604.07446},
+  eprinttype = {arXiv},
+  eprint     = {1604.07446},
+  timestamp  = {Mon, 13 Aug 2018 16:49:15 +0200},
+  biburl     = {https://dblp.org/rec/journals/corr/PadenCYYF16.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org},
+  abstract   = {Self-driving vehicles are a maturing technology with the potential to reshape mobility by enhancing the safety, accessibility, efficiency, and convenience of automotive transportation. Safety-critical tasks that must be executed by a self-driving vehicle include planning of motions through a dynamic environment shared with other vehicles and pedestrians, and their robust executions via feedback control. The objective of this paper is to survey the current state of the art on planning and control algorithms with particular regard to the urban setting. A selection of proposed techniques is reviewed along with a discussion of their effectiveness. The surveyed approaches differ in the vehicle mobility model used, in assumptions on the structure of the environment, and in computational requirements. The side-by-side comparison presented in this survey helps to gain insight into the strengths and limitations of the reviewed approaches and assists with system level design choices.}
 }
 
-@inproceedings{Pomerleau1989,
-  title     = {ALVINN: An Autonomous Land Vehicle in a Neural Network},
+@article{SchwartingWilko2018PaDf,
+  abstract  = {In this review, we provide an overview of emerging trends and challenges in the field of intelligent and autonomous, or self-driving, vehicles. Recent advances in the field of perception, planning, and decision-making for autonomous vehicles have led to great improvements in functional capabilities, with several prototypes already driving on our roads and streets. Yet challenges remain regarding guaranteed performance and safety under all driving circumstances. For instance, planning methods that provide safe and system-compliant performance in complex, cluttered environments while modeling the uncertain interaction with other traffic participants are required. Furthermore, new paradigms, such as interactive planning and end-to-end learning, open up questions regarding safety and reliability that need to be addressed. In this survey, we emphasize recent approaches for integrated perception and planning and for behavior-aware planning, many of which rely on machine learning. This raises the question of verification and safety, which we also touch upon. Finally, we discuss the state of the art and remaining challenges for managing fleets of autonomous vehicles.},
+  author    = {Schwarting, Wilko and Alonso-Mora, Javier and Rus, Daniela},
+  issn      = {2573-5144},
+  journal   = {Annual review of control, robotics, and autonomous systems},
+  keywords  = {autonomous vehicles ; artificial intelligence ; decision-making ; fleet management ; intelligent vehicles ; motion planning ; verification},
+  language  = {eng},
+  number    = {1},
+  pages     = {187-210},
+  publisher = {Annual Reviews},
+  title     = {Planning and Decision-Making for Autonomous Vehicles},
+  volume    = {1},
+  year      = {2018}
+}
+
+
+
+@inproceedings{NIPS1988_812b4ba2,
   author    = {Pomerleau, Dean A.},
-  booktitle = {Proceedings of the 5th International Conference on Neural Information Processing Systems (NIPS)},
-  year      = {1989},
-  pages     = {305--313}
-}
-
-@article{Bojarski2016endtoend,
-  title   = {End to End Learning for Self-Driving Cars},
-  author  = {Bojarski, Mariusz and Testa, Davide D. and Dworakowski, Daniel and Firner, Bernhard and Flepp, Beat and Goyal, Prasoon and Jackel, Lawrence D. and Monfort, Mathew and Muller, Urs and Zhang, Jiakai and Zhang, Xin and Zhao, Jake and Zieba, Karol},
-  journal = {arXiv preprint arXiv:1604.07316},
-  year    = {2016}
-}
-
-@inproceedings{Pan2022transfuser,
-  title     = {TransFuser: A Sensor Fusion Architecture for End-to-End Autonomous Driving},
-  author    = {Pan, Xue Bin and Sobolev, Roman and Bahram, Mohammad and Pappas, George and Wang, Ken and Erwin, Ayan and Rubinstein, Max and Gomes, Carla P.},
-  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-  year      = {2022},
-  pages     = {15036--15045}
-}
-
-@article{Chen2023urban,
-  title   = {Urban-Driving Transformer: Learning Traffic-Aware Driving Policies via Attention},
-  author  = {Chen, Yiqun and Zhou, Hui and Liu, Shun and Gupta, Sanjiv},
-  journal = {IEEE Robotics and Automation Letters},
-  year    = {2023},
-  volume  = {8},
-  number  = {2},
-  pages   = {842--849},
-  doi     = {10.1109/LRA.2023.3245678}
-}
-
-@article{Chen2021decision,
-  title   = {Decision Transformer: Reinforcement Learning via Sequence Modeling},
-  author  = {Chen, Lili and Rubanova, Yulia and Bettencourt, Jacob and Duvenaud, David},
-  journal = {arXiv preprint arXiv:2106.01345},
-  year    = {2021}
-}
-
-@inproceedings{Dosovitskiy2017CARLA,
-  title     = {CARLA: An Open Urban Driving Simulator},
-  author    = {Dosovitskiy, Alexey and Ros, German and Codevilla, Felipe and Lopez, Antonio and Koltun, Vladlen},
-  booktitle = {Proceedings of the 1st Annual Conference on Robot Learning},
-  year      = {2017}
-}
-
-@inproceedings{Vaswani2017attention,
-  title     = {Attention Is All You Need},
-  author    = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N. and Kaiser, Łukasz and Polosukhin, Illia},
   booktitle = {Advances in Neural Information Processing Systems},
-  volume    = {30},
-  year      = {2017}
+  editor    = {D. Touretzky},
+  pages     = {},
+  publisher = {Morgan-Kaufmann},
+  title     = {ALVINN: An Autonomous Land Vehicle in a Neural Network},
+  url       = {https://proceedings.neurips.cc/paper_files/paper/1988/file/812b4ba287f5ee0bc9d43bbf5bbe87fb-Paper.pdf},
+  volume    = {1},
+  year      = {1988},
+  abstract  = {ALVINN (Autonomous Land Vehicle In a Neural Network) is a 3-layer back-propagation network designed for the task of road following. Cur(cid:173) rently ALVINN takes images from a camera and a laser range finder as input and produces as output the direction the vehicle should travel in order to follow the road. Training has been conducted using simulated road images. Successful tests on the Carnegie Mellon autonomous navigation test vehicle indicate that the network can effectively follow real roads under certain field conditions. The representation developed to perfOIm the task differs dra(cid:173) matically when the networlc is trained under various conditions, suggesting the possibility of a novel adaptive autonomous navigation system capable of tailoring its processing to the conditions at hand.}
+}
+
+
+@article{DBLP:journals/corr/BojarskiTDFFGJM16,
+  author     = {Mariusz Bojarski and
+                Davide Del Testa and
+                Daniel Dworakowski and
+                Bernhard Firner and
+                Beat Flepp and
+                Prasoon Goyal and
+                Lawrence D. Jackel and
+                Mathew Monfort and
+                Urs Muller and
+                Jiakai Zhang and
+                Xin Zhang and
+                Jake Zhao and
+                Karol Zieba},
+  title      = {End to End Learning for Self-Driving Cars},
+  journal    = {CoRR},
+  volume     = {abs/1604.07316},
+  year       = {2016},
+  url        = {http://arxiv.org/abs/1604.07316},
+  eprinttype = {arXiv},
+  eprint     = {1604.07316},
+  timestamp  = {Mon, 13 Aug 2018 16:47:06 +0200},
+  biburl     = {https://dblp.org/rec/journals/corr/BojarskiTDFFGJM16.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org},
+  abstract   = {We trained a convolutional neural network (CNN) to map raw pixels from a single front-facing camera directly to steering commands. This end-to-end approach proved surprisingly powerful. With minimum training data from humans the system learns to drive in traffic on local roads with or without lane markings and on highways. It also operates in areas with unclear visual guidance such as in parking lots and on unpaved roads.
+                The system automatically learns internal representations of the necessary processing steps such as detecting useful road features with only the human steering angle as the training signal. We never explicitly trained it to detect, for example, the outline of roads.
+                Compared to explicit decomposition of the problem, such as lane marking detection, path planning, and control, our end-to-end system optimizes all processing steps simultaneously. We argue that this will eventually lead to better performance and smaller systems. Better performance will result because the internal components self-optimize to maximize overall system performance, instead of optimizing human-selected intermediate criteria, e.g., lane detection. Such criteria understandably are selected for ease of human interpretation which doesn't automatically guarantee maximum system performance. Smaller networks are possible because the system learns to solve the problem with the minimal number of processing steps.
+                We used an NVIDIA DevBox and Torch 7 for training and an NVIDIA DRIVE(TM) PX self-driving car computer also running Torch 7 for determining where to drive. The system operates at 30 frames per second (FPS).}
+}
+
+@misc{chitta2022transfuserimitationtransformerbasedsensor,
+  title         = {TransFuser: Imitation with Transformer-Based Sensor Fusion for Autonomous Driving},
+  author        = {Kashyap Chitta and Aditya Prakash and Bernhard Jaeger and Zehao Yu and Katrin Renz and Andreas Geiger},
+  year          = {2022},
+  eprint        = {2205.15997},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CV},
+  url           = {https://arxiv.org/abs/2205.15997},
+  abstract      = {How should we integrate representations from complementary sensors for autonomous driving? Geometry-based fusion has shown promise for perception (e.g. object detection, motion forecasting). However, in the context of end-to-end driving, we find that imitation learning based on existing sensor fusion methods underperforms in complex driving scenarios with a high density of dynamic agents. Therefore, we propose TransFuser, a mechanism to integrate image and LiDAR representations using self-attention. Our approach uses transformer modules at multiple resolutions to fuse perspective view and bird's eye view feature maps. We experimentally validate its efficacy on a challenging new benchmark with long routes and dense traffic, as well as the official leaderboard of the CARLA urban driving simulator. At the time of submission, TransFuser outperforms all prior work on the CARLA leaderboard in terms of driving score by a large margin. Compared to geometry-based fusion, TransFuser reduces the average collisions per kilometer by 48%.}
+}
+
+@article{DBLP:journals/corr/abs-2106-01345,
+  author     = {Lili Chen and
+                Kevin Lu and
+                Aravind Rajeswaran and
+                Kimin Lee and
+                Aditya Grover and
+                Michael Laskin and
+                Pieter Abbeel and
+                Aravind Srinivas and
+                Igor Mordatch},
+  title      = {Decision Transformer: Reinforcement Learning via Sequence Modeling},
+  journal    = {CoRR},
+  volume     = {abs/2106.01345},
+  year       = {2021},
+  url        = {https://arxiv.org/abs/2106.01345},
+  eprinttype = {arXiv},
+  eprint     = {2106.01345},
+  timestamp  = {Thu, 10 Jun 2021 16:34:18 +0200},
+  biburl     = {https://dblp.org/rec/journals/corr/abs-2106-01345.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org},
+  abstract   = {We introduce a framework that abstracts Reinforcement Learning (RL) as a sequence modeling problem. This allows us to draw upon the simplicity and scalability of the Transformer architecture, and associated advances in language modeling such as GPT-x and BERT. In particular, we present Decision Transformer, an architecture that casts the problem of RL as conditional sequence modeling. Unlike prior approaches to RL that fit value functions or compute policy gradients, Decision Transformer simply outputs the optimal actions by leveraging a causally masked Transformer. By conditioning an autoregressive model on the desired return (reward), past states, and actions, our Decision Transformer model can generate future actions that achieve the desired return. Despite its simplicity, Decision Transformer matches or exceeds the performance of state-of-the-art model-free offline RL baselines on Atari, OpenAI Gym, and Key-to-Door tasks.}
+}
+
+@article{DBLP:journals/corr/abs-1711-03938,
+  author     = {Alexey Dosovitskiy and
+                Germ{\'{a}}n Ros and
+                Felipe Codevilla and
+                Antonio M. L{\'{o}}pez and
+                Vladlen Koltun},
+  title      = {{CARLA:} An Open Urban Driving Simulator},
+  journal    = {CoRR},
+  volume     = {abs/1711.03938},
+  year       = {2017},
+  url        = {http://arxiv.org/abs/1711.03938},
+  eprinttype = {arXiv},
+  eprint     = {1711.03938},
+  timestamp  = {Fri, 28 Aug 2020 10:33:55 +0200},
+  biburl     = {https://dblp.org/rec/journals/corr/abs-1711-03938.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org},
+  abstract   = {We introduce CARLA, an open-source simulator for autonomous driving research. CARLA has been developed from the ground up to support development, training, and validation of autonomous urban driving systems. In addition to open-source code and protocols, CARLA provides open digital assets (urban layouts, buildings, vehicles) that were created for this purpose and can be used freely. The simulation platform supports flexible specification of sensor suites and environmental conditions. We use CARLA to study the performance of three approaches to autonomous driving: a classic modular pipeline, an end-to-end model trained via imitation learning, and an end-to-end model trained via reinforcement learning. The approaches are evaluated in controlled scenarios of increasing difficulty, and their performance is examined via metrics provided by CARLA, illustrating the platform's utility for autonomous driving research.}
+}
+
+
+@article{DBLP:journals/corr/VaswaniSPUJGKP17,
+  author     = {Ashish Vaswani and
+                Noam Shazeer and
+                Niki Parmar and
+                Jakob Uszkoreit and
+                Llion Jones and
+                Aidan N. Gomez and
+                Lukasz Kaiser and
+                Illia Polosukhin},
+  title      = {Attention Is All You Need},
+  journal    = {CoRR},
+  volume     = {abs/1706.03762},
+  year       = {2017},
+  url        = {http://arxiv.org/abs/1706.03762},
+  eprinttype = {arXiv},
+  eprint     = {1706.03762},
+  timestamp  = {Sat, 23 Jan 2021 01:20:40 +0100},
+  biburl     = {https://dblp.org/rec/journals/corr/VaswaniSPUJGKP17.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org},
+  abstract   = {The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data.}
 }
